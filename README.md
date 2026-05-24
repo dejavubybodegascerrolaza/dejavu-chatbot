@@ -32,12 +32,12 @@ Open the app with [Expo Go](https://expo.dev/go) by scanning the QR code, or pre
 
 Copy `.env.example` to `.env.local` and fill in your values:
 
-| Variable | Required | Description |
-|---|---|---|
-| `EXPO_PUBLIC_SUPABASE_URL` | Yes | Your Supabase project URL |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes | Your Supabase anon public key |
-| `EXPO_PUBLIC_APP_ENV` | No | `development` / `preview` / `production` |
-| `EXPO_PUBLIC_DISCLAIMER_VERSION` | No | Version of the disclaimer text (default: `v1.0`) |
+| Variable                         | Required | Description                                      |
+| -------------------------------- | -------- | ------------------------------------------------ |
+| `EXPO_PUBLIC_SUPABASE_URL`       | Yes      | Your Supabase project URL                        |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY`  | Yes      | Your Supabase anon public key                    |
+| `EXPO_PUBLIC_APP_ENV`            | No       | `development` / `preview` / `production`         |
+| `EXPO_PUBLIC_DISCLAIMER_VERSION` | No       | Version of the disclaimer text (default: `v1.0`) |
 
 > **Security:** Variables prefixed with `EXPO_PUBLIC_` are bundled into the client app. Never put secrets in these variables. The Supabase `service_role` key is never used in the mobile app — only in Edge Functions.
 
@@ -95,6 +95,7 @@ supabase db seed         # load seed data
 Local Supabase Studio is available at `http://localhost:54323`.
 
 To reset to a clean state:
+
 ```bash
 supabase db reset
 ```
