@@ -1,1 +1,3 @@
-// Bronze IQ - Design system (theme, typography, spacing)
+export * from './tokens'
+export * from './typography'
+export * from './theme'
