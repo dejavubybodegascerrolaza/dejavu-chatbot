@@ -295,6 +295,46 @@ style:    formato, sin cambio de lógica
 
 ---
 
+## Fase 2 — Domain Types + Zod Schemas + Recommendation Engine
+
+### Zod como contrato de dominio — CERRADO
+
+**Decisión:** Los schemas Zod se definen antes de las migraciones SQL. Las migraciones se derivan de los schemas, no al revés.
+
+**Razón:** Garantiza que los tipos TypeScript, la validación runtime y el schema de BD son consistentes. Errores de forma se detectan en tiempo de compilación, no en producción.
+
+### Tipos en camelCase, snake_case en BD — CERRADO
+
+**Decisión:** Los tipos de dominio TypeScript usan camelCase. Las columnas de Supabase usan snake_case. La transformación ocurre en los repositorios (capa de datos).
+
+**Razón:** Los repositorios son el único punto de contacto con Supabase. Las pantallas y servicios no deben conocer el naming de la BD.
+
+### Motor de recomendación antes de UI — CERRADO
+
+**Decisión:** El motor determinista se implementa y se testea al 100% de ramas antes de construir cualquier pantalla que lo consuma.
+
+**Razón:** La lógica de recomendación es el componente de mayor riesgo semántico del MVP. Testearla en aislamiento, sin UI, es más seguro y reproducible.
+
+### ConsentLog fuera del MVP — CERRADO
+
+**Decisión:** No existe tabla `consent_log` en el MVP. El consentimiento del disclaimer se registra en `profiles.disclaimer_accepted_at`.
+
+**Razón:** `ConsentLog` no estaba en el modelo de datos aprobado. Añadir una tabla nueva sin justificación introduce complejidad y posibles implicaciones legales no evaluadas. Para el MVP, `disclaimer_accepted_at` es suficiente.
+
+**Trigger de salida:** Si se añade soporte para múltiples versiones de disclaimer (e.g., se actualiza el texto y se necesita auditoría), crear una tabla `consent_log` append-only con `user_id`, `version`, `accepted_at`.
+
+### `now` inyectado en el motor — CERRADO
+
+**Decisión:** `generateRecommendation` acepta `now?: Date` (default: `new Date()`).
+
+**Razón:** Permite tests deterministas sin mocks de `Date`. Patrón estándar para funciones que dependen del tiempo.
+
+### Sin red en la capa de dominio — CERRADO
+
+**Decisión:** `src/modules/recommendations/`, `src/modules/profile/`, `src/modules/sessions/`, `src/modules/privacy/` y `src/modules/shared/` no contienen llamadas de red ni efectos secundarios. Son lógica pura.
+
+---
+
 ## Decisiones pendientes (no bloqueantes para MVP)
 
 | Decisión                                          | Estado                                                  | Urgencia       |
