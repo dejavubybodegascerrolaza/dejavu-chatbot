@@ -1,1 +1,2 @@
-// Bronze IQ - Core library (Supabase client, env validation)
+export { supabase } from './supabase'
+export { env } from './env'

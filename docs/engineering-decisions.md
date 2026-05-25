@@ -335,6 +335,68 @@ style:    formato, sin cambio de lógica
 
 ---
 
+## Fase 3 — Supabase + Migraciones SQL + RLS + Tipos DB
+
+### Esquema SQL derivado de los schemas Zod — CERRADO
+
+**Decisión:** Las migraciones SQL se escriben una vez confirmados los schemas Zod de dominio.
+
+**Razón:** Los schemas Zod son la fuente de verdad. El SQL los materializa. Evita divergencias entre lo que TypeScript valida y lo que PostgreSQL almacena.
+
+### Nombre de tabla `deletion_requests` — CERRADO
+
+**Decisión:** La tabla se llama `deletion_requests`, no `data_deletion_requests`.
+
+**Razón:** Consistencia con la especificación MVP. El tipo de dominio es `DataDeletionRequest` (camelCase TypeScript), pero la tabla SQL usa el nombre corto. La tabla `data_deletion_requests` estaba en borradores previos; `deletion_requests` es el nombre definitivo.
+
+### Tipos DB manuales en Fase 3 — CERRADO (temporal)
+
+**Decisión:** `src/types/database.types.ts` se mantiene como tipos manuales en el MVP hasta configurar Supabase CLI.
+
+**Razón:** Supabase CLI requiere un proyecto conectado o Docker local. Para MVP sin infraestructura configurada, los tipos manuales siguiendo el formato de la CLI permiten avanzar. Cuando se configure la CLI, sustituir con:
+
+```bash
+npx supabase gen types typescript --local > src/types/database.types.ts
+```
+
+**Regla:** Los tipos manuales deben ser idénticos a lo que generaría la CLI. Cualquier discrepancia es un bug.
+
+### `react-native-url-polyfill` no necesario — CERRADO
+
+**Decisión:** No instalar `react-native-url-polyfill`.
+
+**Razón:** React Native 0.73+ incluye implementación nativa de `URL`. Este proyecto usa RN 0.85.3. El polyfill solo era necesario en versiones anteriores. Instalarlo introduciría código muerto.
+
+### `detectSessionInUrl: false` en React Native — CERRADO
+
+**Decisión:** El cliente Supabase se inicializa con `detectSessionInUrl: false`.
+
+**Razón:** En React Native no hay URL del navegador para detectar sesiones OAuth. Activarlo (valor por defecto `true` en entornos web) genera errores silenciosos. OAuth redirects en mobile se manejan via deep links, no URL parsing.
+
+### `expo-secure-store` como storage de Auth — OBLIGATORIO
+
+**Decisión:** El cliente Supabase usa un adaptador `SecureStoreAdapter` (get/set/remove via `expo-secure-store`).
+
+**Razón:** Supabase Auth persiste el JWT en el storage configurado. AsyncStorage no está cifrado en iOS/Android. `expo-secure-store` usa el Keychain (iOS) y EncryptedSharedPreferences (Android). El adaptador ya está en `src/lib/supabase.ts`.
+
+**Implementación:** El adaptador está listo en Phase 3. La UI de auth (sign-up, sign-in) no existe aún — se construye en Phase 4.
+
+### RLS — validación manual en Phase 3 — CERRADO
+
+**Decisión:** La validación de aislamiento entre usuarios (JWT de usuario B no puede leer datos de A) se documenta como checklist manual en `docs/database.md`. No se automatiza en Phase 3.
+
+**Razón:** Los tests de integración contra Supabase local requieren Docker y Supabase CLI. Para MVP en CI, el checklist manual es suficiente. Se automatizará cuando se configure Supabase CLI.
+
+**Checklist:** Ver `docs/database.md` sección "Testing RLS isolation — Option B".
+
+### `set_updated_at()` trigger — CERRADO
+
+**Decisión:** La función `set_updated_at()` se aplica vía trigger a `profiles` y `exposure_sessions`. No se aplica a `deletion_requests`.
+
+**Razón:** `deletion_requests` es append-only desde el cliente: solo INSERT y SELECT. No hay UPDATE de cliente. No tiene columna `updated_at`. Aplicar el trigger sería dead code.
+
+---
+
 ## Decisiones pendientes (no bloqueantes para MVP)
 
 | Decisión                                          | Estado                                                  | Urgencia       |
