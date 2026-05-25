@@ -4,9 +4,9 @@ import { colors, radius, spacing } from '@/design'
 import { AppText } from './AppText'
 
 type Props = TextInputProps & {
-  label?: string
-  error?: string
-  helper?: string
+  label?: string | undefined
+  error?: string | undefined
+  helper?: string | undefined
 }
 
 export function Input({ label, error, helper, style, ...rest }: Props) {
