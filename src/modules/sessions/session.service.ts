@@ -11,6 +11,16 @@ export async function loadSessions(userId: string): Promise<ExposureSession[]> {
   return SessionRepository.getSessionsByUserId(userId)
 }
 
+export async function loadRecentSessions(
+  userId: string,
+  days: number = 7
+): Promise<ExposureSession[]> {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  const fromDate = cutoff.toISOString().slice(0, 10)
+  return SessionRepository.getRecentSessionsByUserId(userId, fromDate)
+}
+
 export async function createExposureSession(
   userId: string,
   rawInput: CreateExposureSessionInput

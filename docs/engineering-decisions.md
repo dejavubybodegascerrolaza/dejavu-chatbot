@@ -490,3 +490,39 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 | Password reset flow                               | Placeholder en login, implementar si hay tiempo         | Media          |
 | Magic link auth                                   | Pendiente, Supabase lo da sin esfuerzo                  | Baja           |
 | Supabase local vs remoto para dev                 | Local (Docker) — ver README                             | Resuelto       |
+
+---
+
+## Fase 7 — Home real + Recomendación en UI
+
+### Sin "SPF sugerido" como recomendación exacta — CERRADO
+
+**Decisión:** La app no muestra "usa SPF 30" o "aplica SPF 50". Todos los mensajes de recomendación usan lenguaje genérico: "protección adecuada", "prioriza la sombra", "evita las horas de mayor intensidad".
+
+**Razón:** Dar un número de SPF específico convierte la app en orientación médica percibida, aumenta la responsabilidad legal y puede crear falsa seguridad ("llevo SPF 50, estoy protegido"). La orientación de hábito es más útil y menos comprometida que el dato preciso de SPF.
+
+**Trigger de salida:** Si un médico o dermatólogo co-firma el contenido y la app recibe categorización médica en App Store / Play Store.
+
+### `weeklyExposureLoad` no expuesto como riesgo médico — CERRADO
+
+**Decisión:** El campo `weeklyExposureLoad` del `Recommendation` object se usa internamente para calcular el nivel de recomendación, pero nunca se muestra al usuario como métrica ni como porcentaje de riesgo.
+
+**Razón:** Mostrar "has acumulado el 78% de tu carga semanal" puede ser malinterpretado como umbral médico objetivo. El usuario ve el nivel de prudencia en lenguaje humano (`RecommendationLevel`) y las razones humanizadas. El dato numérico crudo permanece interno.
+
+### Tabla `exposure_sessions` sin cambios — CERRADO
+
+**Decisión:** No se añaden columnas en la Fase 7. El historial de 7 días se consulta con `.gte('session_date', fromDate)`.
+
+**Razón:** La única necesidad nueva de datos es filtrar por fecha reciente, que es una query sobre la tabla existente. No hay nueva información que persistir.
+
+### Recomendación calculada en `useMemo` sobre `recentSessions` — CERRADO
+
+**Decisión:** `generateRecommendation(input)` se llama en un `useMemo` en `app/(app)/index.tsx`, recalculando únicamente cuando `profile` o `recentSessions` cambian.
+
+**Razón:** El cálculo es síncrono y barato (reduce sobre máximo 30 sesiones). `useMemo` evita recalcular en cada render de scroll o interacción sin necesidad de moverlo a un hook separado.
+
+### `loadRecentSessions` con estado propio en el store — CERRADO
+
+**Decisión:** El store expone `recentSessions`, `recentSessionsStatus` y `recentSessionsError` como campos independientes de `todaySessions`/`status`/`error`.
+
+**Razón:** Home carga dos fuentes de datos independientes en paralelo (`loadTodaySessions` + `loadRecentSessions`). Un estado compartido crearía colisiones: si la primera carga termina antes, sobrescribiría el estado de la segunda. Campos independientes permiten `isLoading = todayStatus === 'loading' || recentStatus === 'loading'` sin ambigüedad.

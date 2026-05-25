@@ -48,6 +48,22 @@ export async function getTodaySessionsByUserId(
   return (data ?? []).map(mapSessionRowToSession)
 }
 
+export async function getRecentSessionsByUserId(
+  userId: string,
+  fromDate: string
+): Promise<ExposureSession[]> {
+  const { data, error } = await supabase
+    .from('exposure_sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('session_date', fromDate)
+    .order('session_date', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(mapRepositoryError(error))
+  return (data ?? []).map(mapSessionRowToSession)
+}
+
 export async function createSession(
   userId: string,
   input: CreateExposureSessionInput

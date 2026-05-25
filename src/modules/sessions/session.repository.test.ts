@@ -1,9 +1,15 @@
-import { getSessionsByUserId, getTodaySessionsByUserId, createSession } from './session.repository'
+import {
+  getSessionsByUserId,
+  getRecentSessionsByUserId,
+  getTodaySessionsByUserId,
+  createSession,
+} from './session.repository'
 import { supabase } from '@/lib/supabase'
 
 const mockChain = {
   select: jest.fn(),
   eq: jest.fn(),
+  gte: jest.fn(),
   order: jest.fn(),
   insert: jest.fn(),
   single: jest.fn(),
@@ -11,6 +17,7 @@ const mockChain = {
 
 mockChain.select.mockReturnValue(mockChain)
 mockChain.eq.mockReturnValue(mockChain)
+mockChain.gte.mockReturnValue(mockChain)
 mockChain.order.mockReturnValue(mockChain)
 mockChain.insert.mockReturnValue(mockChain)
 
@@ -50,6 +57,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockChain.select.mockReturnValue(mockChain)
   mockChain.eq.mockReturnValue(mockChain)
+  mockChain.gte.mockReturnValue(mockChain)
   mockChain.order.mockReturnValue(mockChain)
   mockChain.insert.mockReturnValue(mockChain)
 })
@@ -85,6 +93,36 @@ describe('getSessionsByUserId', () => {
   it('throws network error when fetch fails', async () => {
     mockGetSessionsResolve({ data: null, error: { message: 'Failed to fetch', code: '0' } })
     await expect(getSessionsByUserId('user-uuid-1')).rejects.toThrow(
+      'No se ha podido conectar. Inténtalo de nuevo.'
+    )
+  })
+})
+
+describe('getRecentSessionsByUserId', () => {
+  it('returns mapped sessions filtered from a given date', async () => {
+    mockGetSessionsResolve({ data: [mockRow], error: null })
+    const result = await getRecentSessionsByUserId('user-uuid-1', '2026-05-18')
+    expect(result).toHaveLength(1)
+    expect(result[0]?.sessionDate).toBe('2026-05-25')
+    expect(mockFrom).toHaveBeenCalledWith('exposure_sessions')
+  })
+
+  it('returns empty array when no recent sessions', async () => {
+    mockGetSessionsResolve({ data: [], error: null })
+    const result = await getRecentSessionsByUserId('user-uuid-1', '2026-05-18')
+    expect(result).toEqual([])
+  })
+
+  it('throws mapped error on Supabase error', async () => {
+    mockGetSessionsResolve({ data: null, error: { message: 'some db error', code: '500' } })
+    await expect(getRecentSessionsByUserId('user-uuid-1', '2026-05-18')).rejects.toThrow(
+      'No se ha podido guardar la sesión. Inténtalo de nuevo.'
+    )
+  })
+
+  it('throws network error when fetch fails', async () => {
+    mockGetSessionsResolve({ data: null, error: { message: 'Failed to fetch', code: '0' } })
+    await expect(getRecentSessionsByUserId('user-uuid-1', '2026-05-18')).rejects.toThrow(
       'No se ha podido conectar. Inténtalo de nuevo.'
     )
   })

@@ -1,13 +1,22 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button } from '@/components/ui'
-import { DisclaimerBox, EmptyState, LoadingState, ErrorState } from '@/components/feedback'
-import { SessionCard } from '@/components/product'
+import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
+import {
+  RecommendationCard,
+  SessionCard,
+  WeeklySummaryCard,
+  SafetyNote,
+} from '@/components/product'
 import { colors, spacing } from '@/design'
 import { useAuthStore } from '@/modules/auth/auth.store'
+import { useProfileStore } from '@/modules/profile/profile.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
+import { SENSATION_LABELS } from '@/modules/sessions/session.labels'
+import { generateRecommendation } from '@/modules/recommendations/recommendation.service'
+import { LEVEL_SUBTEXTS } from '@/modules/recommendations/recommendation.labels'
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10)
@@ -17,23 +26,86 @@ export default function HomeScreen() {
   const user = useAuthStore((s) => s.user)
   const { logout, isSubmitting: isLoggingOut } = useAuthStore()
 
-  const { status, todaySessions, error, loadTodaySessions, clearSessions } = useSessionStore()
+  const profile = useProfileStore((s) => s.profile)
+  const profileStatus = useProfileStore((s) => s.status)
+
+  const {
+    status: todayStatus,
+    todaySessions,
+    recentSessions,
+    recentSessionsStatus,
+    recentSessionsError,
+    error: todayError,
+    loadTodaySessions,
+    loadRecentSessions,
+    clearSessions,
+  } = useSessionStore()
+
+  const userId = user?.id
 
   useEffect(() => {
-    if (!user) return
+    if (!userId) return
     const today = getTodayString()
-    void loadTodaySessions(user.id, today)
+    void loadTodaySessions(userId, today)
+    void loadRecentSessions(userId, 7)
     return () => {
       clearSessions()
     }
-  }, [user, loadTodaySessions, clearSessions])
+  }, [userId, loadTodaySessions, loadRecentSessions, clearSessions])
+
+  const recommendation = useMemo(() => {
+    if (!profile) return null
+    return generateRecommendation({
+      profile: {
+        mainGoal: profile.mainGoal,
+        sunSensitivity: profile.sunSensitivity,
+        skinType: profile.skinType,
+      },
+      sessionsLast7Days: recentSessions,
+    })
+  }, [profile, recentSessions])
+
+  const isLoading =
+    profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'
+
+  const loadError = todayError ?? recentSessionsError
 
   const handleRegister = () => {
     router.push('/(app)/session-log')
   }
 
-  const handleLogout = async () => {
-    await logout()
+  const handleRetry = () => {
+    if (!userId) return
+    const today = getTodayString()
+    void loadTodaySessions(userId, today)
+    void loadRecentSessions(userId, 7)
+  }
+
+  const weeklySessionsCount = recentSessions.length
+  const weeklyTotalMinutes = recentSessions.reduce((sum, s) => sum + s.durationMinutes, 0)
+  const lastSession = recentSessions[0] ?? null
+  const lastSensationLabel = lastSession ? SENSATION_LABELS[lastSession.sensationAfter] : null
+
+  const alias = profile?.alias ?? ''
+  const level = recommendation?.level ?? 'low'
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <LoadingState message="Cargando tu información…" />
+      </SafeAreaView>
+    )
+  }
+
+  if (loadError !== null && loadError !== undefined) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ErrorState
+          message="No se ha podido cargar tu información. Inténtalo de nuevo."
+          onRetry={handleRetry}
+        />
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -45,13 +117,35 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <AppText variant="title">Bronze IQ</AppText>
+          <AppText variant="title">{alias !== '' ? `Hola, ${alias}` : 'Hola'}</AppText>
           <AppText variant="body" color="textSecondary" style={styles.subtitle}>
-            Menos improvisación. Más control.
+            {LEVEL_SUBTEXTS[level]}
           </AppText>
         </View>
 
-        {/* CTA */}
+        {/* Recommendation */}
+        {recommendation !== null ? (
+          <RecommendationCard
+            title={recommendation.title}
+            message={recommendation.message}
+            level={recommendation.level}
+            reasons={recommendation.reasons}
+            ctaLabel={recommendation.ctaLabel}
+            onCtaPress={handleRegister}
+          />
+        ) : null}
+
+        {/* Weekly summary */}
+        {recommendation !== null ? (
+          <WeeklySummaryCard
+            sessionsCount={weeklySessionsCount}
+            totalMinutes={weeklyTotalMinutes}
+            lastSensationLabel={lastSensationLabel}
+            recommendationLevel={recommendation.level}
+          />
+        ) : null}
+
+        {/* Register CTA */}
         <Button
           label="Registrar exposición"
           variant="primary"
@@ -66,20 +160,10 @@ export default function HomeScreen() {
           <AppText variant="heading" style={styles.sectionTitle}>
             Hoy
           </AppText>
-
-          {status === 'loading' ? (
-            <LoadingState message="Cargando sesiones…" />
-          ) : status === 'error' ? (
-            <ErrorState
-              message={error ?? 'No se han podido cargar tus sesiones. Inténtalo de nuevo.'}
-              onRetry={() => user && void loadTodaySessions(user.id, getTodayString())}
-            />
-          ) : status === 'empty' || todaySessions.length === 0 ? (
+          {todaySessions.length === 0 ? (
             <EmptyState
               title="Todavía no has registrado ninguna sesión hoy."
               description="Cuando guardes una exposición, aparecerá aquí."
-              ctaLabel="Registrar primera sesión"
-              onCta={handleRegister}
             />
           ) : (
             <View style={styles.sessionList}>
@@ -90,8 +174,17 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Disclaimer */}
-        <DisclaimerBox compact />
+        {/* Last session (if not already shown in today) */}
+        {lastSession !== null && lastSession.sessionDate !== getTodayString() ? (
+          <View style={styles.section}>
+            <AppText variant="heading" style={styles.sectionTitle}>
+              Última sesión
+            </AppText>
+            <SessionCard session={lastSession} />
+          </View>
+        ) : null}
+
+        <SafetyNote />
 
         {/* Logout */}
         <Button
@@ -100,7 +193,7 @@ export default function HomeScreen() {
           size="md"
           fullWidth
           loading={isLoggingOut}
-          onPress={() => void handleLogout()}
+          onPress={() => void logout()}
           accessibilityLabel="Cerrar sesión"
           style={styles.logoutButton}
         />

@@ -9,10 +9,14 @@ type SessionStore = {
   status: SessionStatus
   todaySessions: ExposureSession[]
   sessions: ExposureSession[]
+  recentSessions: ExposureSession[]
+  recentSessionsStatus: SessionStatus
+  recentSessionsError: string | null
   error: string | null
   isSubmitting: boolean
   loadTodaySessions: (userId: string, today: string) => Promise<void>
   loadSessions: (userId: string) => Promise<void>
+  loadRecentSessions: (userId: string, days?: number) => Promise<void>
   createSession: (
     userId: string,
     input: CreateExposureSessionInput
@@ -25,6 +29,9 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   status: 'idle',
   todaySessions: [],
   sessions: [],
+  recentSessions: [],
+  recentSessionsStatus: 'idle',
+  recentSessionsError: null,
   error: null,
   isSubmitting: false,
 
@@ -68,6 +75,26 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     }
   },
 
+  loadRecentSessions: async (userId, days = 7) => {
+    set({ recentSessionsStatus: 'loading', recentSessionsError: null })
+    try {
+      const sessions = await SessionService.loadRecentSessions(userId, days)
+      set({
+        recentSessionsStatus: sessions.length > 0 ? 'ready' : 'empty',
+        recentSessions: sessions,
+        recentSessionsError: null,
+      })
+    } catch (err) {
+      set({
+        recentSessionsStatus: 'error',
+        recentSessionsError:
+          err instanceof Error
+            ? err.message
+            : 'No se han podido cargar tus sesiones. Inténtalo de nuevo.',
+      })
+    }
+  },
+
   createSession: async (userId, input) => {
     set({ isSubmitting: true, error: null })
     try {
@@ -93,6 +120,20 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         set({ isSubmitting: false })
       }
 
+      // Also prepend to recentSessions if within last 7 days
+      const { recentSessions, recentSessionsStatus } = get()
+      const alreadyInRecent = recentSessions.some((s) => s.id === session.id)
+      if (!alreadyInRecent) {
+        set({
+          recentSessions: [session, ...recentSessions].sort((a, b) =>
+            b.sessionDate !== a.sessionDate
+              ? b.sessionDate.localeCompare(a.sessionDate)
+              : b.createdAt.localeCompare(a.createdAt)
+          ),
+          recentSessionsStatus: recentSessionsStatus === 'empty' ? 'ready' : recentSessionsStatus,
+        })
+      }
+
       return session
     } catch (err) {
       set({
@@ -107,7 +148,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   },
 
   clearSessions: () => {
-    set({ status: 'idle', todaySessions: [], sessions: [], error: null, isSubmitting: false })
+    set({
+      status: 'idle',
+      todaySessions: [],
+      sessions: [],
+      recentSessions: [],
+      recentSessionsStatus: 'idle',
+      recentSessionsError: null,
+      error: null,
+      isSubmitting: false,
+    })
   },
 
   clearError: () => set({ error: null }),

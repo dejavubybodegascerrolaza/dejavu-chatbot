@@ -5,11 +5,15 @@ import * as SessionService from './session.service'
 jest.mock('./session.service', () => ({
   loadTodaySessions: jest.fn(),
   loadSessions: jest.fn(),
+  loadRecentSessions: jest.fn(),
   createExposureSession: jest.fn(),
 }))
 
 const mockLoadToday = SessionService.loadTodaySessions as jest.MockedFunction<
   typeof SessionService.loadTodaySessions
+>
+const mockLoadRecent = SessionService.loadRecentSessions as jest.MockedFunction<
+  typeof SessionService.loadRecentSessions
 >
 const mockCreate = SessionService.createExposureSession as jest.MockedFunction<
   typeof SessionService.createExposureSession
@@ -46,6 +50,9 @@ beforeEach(() => {
     status: 'idle',
     todaySessions: [],
     sessions: [],
+    recentSessions: [],
+    recentSessionsStatus: 'idle',
+    recentSessionsError: null,
     error: null,
     isSubmitting: false,
   })
@@ -136,18 +143,60 @@ describe('useSessionStore — createSession', () => {
   })
 })
 
+describe('useSessionStore — loadRecentSessions', () => {
+  it('sets recentSessionsStatus ready when sessions exist', async () => {
+    mockLoadRecent.mockResolvedValueOnce([mockSession])
+    await act(async () => {
+      await useSessionStore.getState().loadRecentSessions('user-uuid-1', 7)
+    })
+    const state = useSessionStore.getState()
+    expect(state.recentSessionsStatus).toBe('ready')
+    expect(state.recentSessions).toEqual([mockSession])
+    expect(state.recentSessionsError).toBeNull()
+  })
+
+  it('sets recentSessionsStatus empty when no sessions', async () => {
+    mockLoadRecent.mockResolvedValueOnce([])
+    await act(async () => {
+      await useSessionStore.getState().loadRecentSessions('user-uuid-1', 7)
+    })
+    const state = useSessionStore.getState()
+    expect(state.recentSessionsStatus).toBe('empty')
+    expect(state.recentSessions).toEqual([])
+  })
+
+  it('sets recentSessionsStatus error on failure', async () => {
+    mockLoadRecent.mockRejectedValueOnce(
+      new Error('No se han podido cargar tus sesiones. Inténtalo de nuevo.')
+    )
+    await act(async () => {
+      await useSessionStore.getState().loadRecentSessions('user-uuid-1', 7)
+    })
+    const state = useSessionStore.getState()
+    expect(state.recentSessionsStatus).toBe('error')
+    expect(state.recentSessionsError).toBe(
+      'No se han podido cargar tus sesiones. Inténtalo de nuevo.'
+    )
+  })
+})
+
 describe('useSessionStore — clearSessions', () => {
-  it('resets all state to idle', () => {
+  it('resets all state including recentSessions to idle', () => {
     useSessionStore.setState({
       status: 'ready',
       todaySessions: [mockSession],
       sessions: [mockSession],
+      recentSessions: [mockSession],
+      recentSessionsStatus: 'ready',
+      recentSessionsError: null,
     })
     useSessionStore.getState().clearSessions()
     const state = useSessionStore.getState()
     expect(state.status).toBe('idle')
     expect(state.todaySessions).toEqual([])
     expect(state.sessions).toEqual([])
+    expect(state.recentSessions).toEqual([])
+    expect(state.recentSessionsStatus).toBe('idle')
     expect(state.error).toBeNull()
   })
 })
