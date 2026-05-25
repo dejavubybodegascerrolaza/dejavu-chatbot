@@ -48,6 +48,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       exposure_sessions: {
         Row: {
@@ -89,6 +90,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       deletion_requests: {
         Row: {
@@ -112,8 +114,10 @@ export type Database = {
           status?: string
           processed_at?: string | null
         }
+        Relationships: []
       }
     }
+    Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
   }

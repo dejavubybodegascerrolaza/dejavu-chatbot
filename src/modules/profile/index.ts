@@ -1,2 +1,7 @@
 export * from './profile.types'
 export * from './profile.schema'
+export * from './profile.mapper'
+export * from './profile.repository'
+export * from './profile.service'
+export { useProfileStore } from './profile.store'
+export type { ProfileStatus } from './profile.store'

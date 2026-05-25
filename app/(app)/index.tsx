@@ -3,25 +3,27 @@ import { StyleSheet, View } from 'react-native'
 import { Screen, AppText, Button } from '@/components/ui'
 import { spacing } from '@/design'
 import { useAuthStore } from '@/modules/auth/auth.store'
+import { useProfileStore } from '@/modules/profile/profile.store'
 
-export default function ProtectedHomeScreen() {
-  const { logout, isSubmitting, user } = useAuthStore()
+export default function AppPlaceholderScreen() {
+  const { logout, isSubmitting } = useAuthStore()
+  const profile = useProfileStore((s) => s.profile)
 
   return (
     <Screen padded>
       <View style={styles.container}>
         <View style={styles.content}>
           <AppText variant="title" align="center">
-            Sesión iniciada
+            Perfil completado
           </AppText>
-          {user?.email ? (
-            <AppText variant="body" color="textSecondary" align="center" style={styles.email}>
-              {user.email}
+          {profile?.alias ? (
+            <AppText variant="heading" color="brand" align="center" style={styles.alias}>
+              {profile.alias}
             </AppText>
           ) : null}
           <AppText variant="body" color="textMuted" align="center" style={styles.description}>
-            La autenticación ya está funcionando. El onboarding y el perfil se construirán en la
-            siguiente fase.
+            Bronze IQ ya tiene la base de tu perfil. La Home, las sesiones y las recomendaciones se
+            construirán en las siguientes fases.
           </AppText>
         </View>
 
@@ -50,7 +52,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
   },
-  email: {
+  alias: {
     marginTop: spacing.xs,
   },
   description: {

@@ -2,32 +2,58 @@ import React, { useEffect } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useAuthStore } from '@/modules/auth/auth.store'
+import { useProfileStore } from '@/modules/profile/profile.store'
 
 export default function RootLayout() {
   const initializeAuth = useAuthStore((s) => s.initializeAuth)
-  const status = useAuthStore((s) => s.status)
+  const authStatus = useAuthStore((s) => s.status)
+  const user = useAuthStore((s) => s.user)
+
+  const profileStatus = useProfileStore((s) => s.status)
+  const loadProfile = useProfileStore((s) => s.loadProfile)
+  const clearProfile = useProfileStore((s) => s.clearProfile)
+
   const segments = useSegments()
   const router = useRouter()
 
-  // Subscribe to Supabase auth state once on mount. The INITIAL_SESSION event
-  // fires immediately and transitions status out of 'loading'.
+  // Subscribe to Supabase auth state once on mount.
+  // INITIAL_SESSION fires immediately and resolves authStatus out of 'loading'.
   useEffect(() => {
     return initializeAuth()
   }, [initializeAuth])
 
-  // Redirect based on auth state whenever status or location changes.
+  // Load profile when auth becomes available; clear when logged out.
+  // profileStatus === 'idle' guard prevents duplicate loads (incl. StrictMode).
   useEffect(() => {
-    if (status === 'loading') return
+    if (authStatus === 'authenticated' && user !== null && profileStatus === 'idle') {
+      void loadProfile(user.id)
+    }
+    if (authStatus === 'unauthenticated' && profileStatus !== 'idle') {
+      clearProfile()
+    }
+  }, [authStatus, user, profileStatus, loadProfile, clearProfile])
+
+  // Route based on combined auth + profile state.
+  // Wait for both to resolve before redirecting.
+  useEffect(() => {
+    if (authStatus === 'loading' || profileStatus === 'loading') return
+    // profileStatus 'idle' means profile load hasn't started yet — wait
+    if (authStatus === 'authenticated' && profileStatus === 'idle') return
 
     const inAuthGroup = segments[0] === '(auth)'
+    const inOnboardingGroup = segments[0] === '(onboarding)'
     const inAppGroup = segments[0] === '(app)'
 
-    if (status === 'unauthenticated' && !inAuthGroup) {
+    if (authStatus === 'unauthenticated' && !inAuthGroup) {
       router.replace('/(auth)/welcome')
-    } else if (status === 'authenticated' && !inAppGroup) {
-      router.replace('/(app)')
+    } else if (authStatus === 'authenticated') {
+      if ((profileStatus === 'missing' || profileStatus === 'error') && !inOnboardingGroup) {
+        router.replace('/(onboarding)')
+      } else if (profileStatus === 'ready' && !inAppGroup) {
+        router.replace('/(app)')
+      }
     }
-  }, [status, segments, router])
+  }, [authStatus, profileStatus, segments, router])
 
   return (
     <SafeAreaProvider>

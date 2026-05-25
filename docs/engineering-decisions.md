@@ -397,6 +397,60 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 
 ---
 
+## Fase 5 — Onboarding + Disclaimer + Profile Setup
+
+### Profile se crea solo al completar onboarding — CERRADO
+
+**Decisión:** La tabla `profiles` recibe su primer INSERT solo cuando el usuario completa el wizard de onboarding (`onboarding_completed = true`). No se crea una fila vacía al hacer sign-up.
+
+**Razón:** Evita perfiles parciales sin consentimiento registrado. El disclaimer se acepta en el paso 3 del wizard; su timestamp (`disclaimer_accepted_at`) forma parte del INSERT. Sin disclaimer aceptado, no hay perfil.
+
+### Onboarding después de Auth — CERRADO
+
+**Decisión:** El flujo es: auth → detectar perfil → onboarding (si ausente/incompleto) → app.
+
+**Guard en root layout con tres estados:**
+
+- `unauthenticated` → `/(auth)/welcome`
+- `authenticated` + `profileStatus = missing | error` → `/(onboarding)`
+- `authenticated` + `profileStatus = ready` → `/(app)`
+
+**Anti-loop:** El guard verifica el segmento actual antes de redirigir (`replace`, no `push`). El store usa `status === 'idle'` como mutex para evitar cargas duplicadas (incluye StrictMode).
+
+### Disclaimer guardado en `profiles.disclaimer_accepted_at` — CERRADO
+
+**Decisión:** No existe tabla `consent_log`. El timestamp de aceptación del disclaimer se guarda como columna `disclaimer_accepted_at` en `profiles`.
+
+**Razón:** Decisión de Fase 2 confirmada. Para el MVP, una sola versión de disclaimer y su timestamp en el perfil es suficiente. Ver "ConsentLog fuera del MVP — CERRADO".
+
+### `completeOnboarding` usa create-or-update — CERRADO
+
+**Decisión:** `profile.service.ts::completeOnboarding` llama primero a `getProfileByUserId`. Si existe (onboarding incompleto previo), hace `updateProfile`. Si no existe, hace `createProfile`.
+
+**Razón:** Permite re-entrada al onboarding sin crear perfiles duplicados. El RLS de Supabase bloquea cualquier INSERT con `id != auth.uid()`, pero la lógica en servicio es la primera barrera.
+
+### `Database['public']['Views']` requerido por Supabase v2.106 — CERRADO
+
+**Decisión:** `src/types/database.types.ts` incluye `Views: Record<string, never>` en el schema `public`.
+
+**Razón:** `GenericSchema` en Supabase JS v2.106 requiere el campo `Views` para que `Database['public']` extienda la interfaz. Sin él, los tipos de `.insert()` y `.update()` se infieren como `never`, bloqueando TypeScript. Cada tabla incluye también `Relationships: []` por el mismo motivo (`GenericTable` requiere `Relationships: GenericRelationship[]`).
+
+### Wizard de onboarding en ruta única — CERRADO
+
+**Decisión:** `app/(onboarding)/index.tsx` contiene el wizard completo con estado local (`useState`). No hay una ruta por paso.
+
+**Razón:** Con una ruta única no hay gestión de navegación entre pasos (sin back-button issues, sin stack de 8 pantallas). El estado del wizard se mantiene en memoria local. La pérdida al rotar pantalla o matar la app es aceptable para MVP.
+
+**Trigger de salida:** Si se necesita deep-linking a un paso específico o back navigation entre pasos, migrar a rutas individuales `app/(onboarding)/step-[n].tsx`.
+
+### Home real aplazada — CERRADO
+
+**Decisión:** `app/(app)/index.tsx` sigue siendo placeholder tras la Fase 5. Muestra "Perfil completado" + botón de logout.
+
+**Razón:** La Home requiere el motor de recomendaciones en UI, el historial del día y el estado de sesión. Construirla antes sería prematuro sin sesiones implementadas.
+
+---
+
 ## Decisiones pendientes (no bloqueantes para MVP)
 
 | Decisión                                          | Estado                                                  | Urgencia       |

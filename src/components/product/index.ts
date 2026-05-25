@@ -1,4 +1,3 @@
-// Bronze IQ - Product components
-// RecommendationCard, WeeklySummaryCard, SessionCard, SafetyNote,
-// ProfileOptionCard, OnboardingStep, FormSection, SettingsRow,
-// DeleteConfirmationModal
+export { OnboardingStep } from './OnboardingStep'
+export { ProfileOptionCard } from './ProfileOptionCard'
+export { FormSection } from './FormSection'
