@@ -451,6 +451,36 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 
 ---
 
+## Fase 6 — Sessions Module
+
+### `exposureLoad` no persistido — CERRADO
+
+**Decisión:** La tabla `exposure_sessions` no tiene columna `exposure_score`, `exposure_load` ni `risk_score`. No se añadirá en el MVP.
+
+**Razón:** `weeklyExposureLoad` es un dato derivado calculado en cliente por `RecommendationService` a partir de las sesiones de los últimos 7 días. Persitirlo crearía duplicación de verdad y requeriría recalcular en cada sesión. El cálculo en cliente es trivialmente rápido y siempre consistente.
+
+**Trigger de salida:** Si el motor de recomendaciones se mueve a un Edge Function, recalcular en servidor y persistir cache de recomendación tiene sentido. Hasta entonces, dato derivado.
+
+### React Hook Form para formulario de sesiones — CERRADO
+
+**Decisión:** `SessionForm.tsx` usa `react-hook-form` con `zodResolver`. Los campos numéricos (`durationMinutes`) se capturan como string en el formulario y se convierten a número en `onSubmit`. Los campos enum que no tienen pre-selección (`context`, `sensationAfter`) son `.optional()` en el schema del formulario con validación manual en `onSubmit` usando `setError`.
+
+**Razón:** Consistencia con los formularios de auth. RHF evita re-renders innecesarios. La coerción de string → number en Zod v4 (`z.coerce.number()`) infiere tipo `unknown` en la versión actual; la validación con `.refine()` sobre strings es más compatible con `exactOptionalPropertyTypes`.
+
+### Mini Home funcional — CERRADO
+
+**Decisión:** `app/(app)/index.tsx` se convierte en mini Home con: header, CTA de registro, lista de sesiones del día, empty state y botón de logout. Sin recomendaciones, sin historial completo.
+
+**Razón:** Completar el primer ciclo funcional: registrar una sesión y verla reflejada inmediatamente. La Home final (con recomendación en UI) se construye cuando el motor de recomendaciones esté integrado.
+
+### Sesiones cargadas en mount de Home y limpiadas en unmount — CERRADO
+
+**Decisión:** `app/(app)/index.tsx` llama a `loadTodaySessions` en `useEffect` on mount y `clearSessions` en el cleanup del mismo effect.
+
+**Razón:** Evita mostrar datos de una sesión previa al reiniciar. El cleanup en unmount garantiza estado limpio si el componente se desmonta (e.g. en logout). La carga se hace solo cuando hay `user` disponible.
+
+---
+
 ## Decisiones pendientes (no bloqueantes para MVP)
 
 | Decisión                                          | Estado                                                  | Urgencia       |
