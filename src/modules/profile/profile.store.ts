@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Profile } from './profile.types'
-import type { ProfileSetupInput } from './profile.schema'
+import type { ProfileSetupInput, ProfileUpdateInput } from './profile.schema'
 import * as ProfileService from './profile.service'
 
 export type ProfileStatus = 'idle' | 'loading' | 'missing' | 'ready' | 'error'
@@ -13,6 +13,7 @@ type ProfileStore = {
 
   loadProfile: (userId: string) => Promise<void>
   completeOnboarding: (userId: string, input: ProfileSetupInput) => Promise<void>
+  updateProfile: (userId: string, input: ProfileUpdateInput) => Promise<void>
   clearProfile: () => void
   clearError: () => void
 }
@@ -49,6 +50,16 @@ export const useProfileStore = create<ProfileStore>((set) => ({
     try {
       const profile = await ProfileService.completeOnboarding(userId, input)
       set({ status: 'ready', profile, isSubmitting: false })
+    } catch (e) {
+      set({ error: getErrorMessage(e), isSubmitting: false })
+    }
+  },
+
+  updateProfile: async (userId, input) => {
+    set({ isSubmitting: true, error: null })
+    try {
+      const profile = await ProfileService.updateProfileSettings(userId, input)
+      set({ profile, isSubmitting: false })
     } catch (e) {
       set({ error: getErrorMessage(e), isSubmitting: false })
     }

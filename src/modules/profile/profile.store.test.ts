@@ -5,6 +5,7 @@ import * as ProfileService from './profile.service'
 jest.mock('./profile.service', () => ({
   loadProfile: jest.fn(),
   completeOnboarding: jest.fn(),
+  updateProfileSettings: jest.fn(),
 }))
 
 const mockLoadProfile = ProfileService.loadProfile as jest.MockedFunction<
@@ -12,6 +13,9 @@ const mockLoadProfile = ProfileService.loadProfile as jest.MockedFunction<
 >
 const mockCompleteOnboarding = ProfileService.completeOnboarding as jest.MockedFunction<
   typeof ProfileService.completeOnboarding
+>
+const mockUpdateProfileSettings = ProfileService.updateProfileSettings as jest.MockedFunction<
+  typeof ProfileService.updateProfileSettings
 >
 
 const mockProfile = {
@@ -126,5 +130,48 @@ describe('useProfileStore — clearError', () => {
     useProfileStore.setState({ error: 'some error' })
     useProfileStore.getState().clearError()
     expect(useProfileStore.getState().error).toBeNull()
+  })
+})
+
+describe('useProfileStore — updateProfile', () => {
+  it('updates profile in state on success', async () => {
+    const updatedProfile = { ...mockProfile, alias: 'NewName' }
+    useProfileStore.setState({ status: 'ready', profile: mockProfile })
+    mockUpdateProfileSettings.mockResolvedValueOnce(updatedProfile)
+    await act(async () => {
+      await useProfileStore.getState().updateProfile('user-uuid-1', { alias: 'NewName' })
+    })
+    const state = useProfileStore.getState()
+    expect(state.profile).toEqual(updatedProfile)
+    expect(state.isSubmitting).toBe(false)
+    expect(state.error).toBeNull()
+  })
+
+  it('sets error on failure without changing profile', async () => {
+    useProfileStore.setState({ status: 'ready', profile: mockProfile })
+    mockUpdateProfileSettings.mockRejectedValueOnce(
+      new Error('No se ha podido guardar tu perfil. Inténtalo de nuevo.')
+    )
+    await act(async () => {
+      await useProfileStore.getState().updateProfile('user-uuid-1', { alias: 'NewName' })
+    })
+    const state = useProfileStore.getState()
+    expect(state.profile).toEqual(mockProfile)
+    expect(state.error).toBe('No se ha podido guardar tu perfil. Inténtalo de nuevo.')
+    expect(state.isSubmitting).toBe(false)
+  })
+
+  it('sets isSubmitting true during the request', async () => {
+    const submittingValues: boolean[] = []
+    mockUpdateProfileSettings.mockImplementationOnce(async () => {
+      submittingValues.push(useProfileStore.getState().isSubmitting)
+      return mockProfile
+    })
+    useProfileStore.setState({ status: 'ready', profile: mockProfile })
+    await act(async () => {
+      await useProfileStore.getState().updateProfile('user-uuid-1', { alias: 'Alex' })
+    })
+    expect(submittingValues).toContain(true)
+    expect(useProfileStore.getState().isSubmitting).toBe(false)
   })
 })

@@ -1,6 +1,6 @@
 import type { Tables, Inserts, Updates } from '@/types/database.types'
 import type { Profile, MainGoal, SunSensitivity, SkinType } from './profile.types'
-import type { ProfileSetupInput } from './profile.schema'
+import type { ProfileSetupInput, ProfileUpdateInput } from './profile.schema'
 
 type ProfileRow = Tables<'profiles'>
 
@@ -42,4 +42,13 @@ export function mapSetupInputToUpdate(input: ProfileSetupInput): Updates<'profil
     onboarding_completed: true,
     disclaimer_accepted_at: input.disclaimerAcceptedAt,
   }
+}
+
+export function mapUpdateInputToUpdate(input: ProfileUpdateInput): Updates<'profiles'> {
+  const update: Updates<'profiles'> = {}
+  if (input.alias !== undefined) update.alias = input.alias
+  if (input.mainGoal !== undefined) update.main_goal = input.mainGoal
+  if (input.sunSensitivity !== undefined) update.sun_sensitivity = input.sunSensitivity
+  if ('skinType' in input) update.skin_type = input.skinType ?? null
+  return update
 }

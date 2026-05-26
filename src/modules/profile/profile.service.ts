@@ -1,10 +1,18 @@
-import { profileSetupSchema } from './profile.schema'
-import type { ProfileSetupInput } from './profile.schema'
+import { profileSetupSchema, profileUpdateSchema } from './profile.schema'
+import type { ProfileSetupInput, ProfileUpdateInput } from './profile.schema'
 import type { Profile } from './profile.types'
 import * as ProfileRepository from './profile.repository'
 
 export async function loadProfile(userId: string): Promise<Profile | null> {
   return ProfileRepository.getProfileByUserId(userId)
+}
+
+export async function updateProfileSettings(
+  userId: string,
+  input: ProfileUpdateInput
+): Promise<Profile> {
+  const validated = profileUpdateSchema.parse(input)
+  return ProfileRepository.updateProfileSettings(userId, validated)
 }
 
 export async function completeOnboarding(

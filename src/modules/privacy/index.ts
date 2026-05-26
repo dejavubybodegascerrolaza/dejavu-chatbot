@@ -1,2 +1,5 @@
 export * from './privacy.types'
 export * from './privacy.schema'
+export * from './privacy.mapper'
+export * from './privacy.service'
+export * from './privacy.store'

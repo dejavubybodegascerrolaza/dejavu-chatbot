@@ -1,10 +1,11 @@
 import { supabase } from '@/lib/supabase'
 import type { Profile } from './profile.types'
-import type { ProfileSetupInput } from './profile.schema'
+import type { ProfileSetupInput, ProfileUpdateInput } from './profile.schema'
 import {
   mapProfileRowToProfile,
   mapSetupInputToInsert,
   mapSetupInputToUpdate,
+  mapUpdateInputToUpdate,
 } from './profile.mapper'
 
 function mapRepositoryError(error: unknown): string {
@@ -55,5 +56,21 @@ export async function updateProfile(userId: string, input: ProfileSetupInput): P
 
   if (error) throw new Error(mapRepositoryError(error))
   if (!data) throw new Error('No se ha podido actualizar tu perfil. Inténtalo de nuevo.')
+  return mapProfileRowToProfile(data)
+}
+
+export async function updateProfileSettings(
+  userId: string,
+  input: ProfileUpdateInput
+): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(mapUpdateInputToUpdate(input))
+    .eq('id', userId)
+    .select()
+    .single()
+
+  if (error) throw new Error(mapRepositoryError(error))
+  if (!data) throw new Error('No se han podido guardar los cambios. Inténtalo de nuevo.')
   return mapProfileRowToProfile(data)
 }

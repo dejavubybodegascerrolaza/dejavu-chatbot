@@ -165,6 +165,16 @@ export default function HomeScreen() {
           accessibilityLabel="Ver historial completo de sesiones"
         />
 
+        {/* Settings link */}
+        <Button
+          label="Ajustes"
+          variant="ghost"
+          size="md"
+          fullWidth
+          onPress={() => router.push('/(app)/settings')}
+          accessibilityLabel="Ir a ajustes"
+        />
+
         {/* Sessions today */}
         <View style={styles.section}>
           <AppText variant="heading" style={styles.sectionTitle}>

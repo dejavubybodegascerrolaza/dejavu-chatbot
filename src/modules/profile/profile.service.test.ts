@@ -1,10 +1,11 @@
-import { loadProfile, completeOnboarding } from './profile.service'
+import { loadProfile, completeOnboarding, updateProfileSettings } from './profile.service'
 import * as ProfileRepository from './profile.repository'
 
 jest.mock('./profile.repository', () => ({
   getProfileByUserId: jest.fn(),
   createProfile: jest.fn(),
   updateProfile: jest.fn(),
+  updateProfileSettings: jest.fn(),
 }))
 
 const mockGetProfile = ProfileRepository.getProfileByUserId as jest.MockedFunction<
@@ -15,6 +16,9 @@ const mockCreateProfile = ProfileRepository.createProfile as jest.MockedFunction
 >
 const mockUpdateProfile = ProfileRepository.updateProfile as jest.MockedFunction<
   typeof ProfileRepository.updateProfile
+>
+const mockUpdateProfileSettings = ProfileRepository.updateProfileSettings as jest.MockedFunction<
+  typeof ProfileRepository.updateProfileSettings
 >
 
 const mockProfile = {
@@ -87,6 +91,42 @@ describe('completeOnboarding', () => {
     mockGetProfile.mockResolvedValueOnce(null)
     mockCreateProfile.mockResolvedValueOnce({ ...mockProfile, skinType: null })
     const result = await completeOnboarding('user-uuid-1', { ...validInput, skinType: null })
+    expect(result.skinType).toBeNull()
+  })
+})
+
+describe('updateProfileSettings', () => {
+  it('delegates to repository with valid input and returns updated profile', async () => {
+    const updatedProfile = { ...mockProfile, alias: 'NewAlias' }
+    mockUpdateProfileSettings.mockResolvedValueOnce(updatedProfile)
+    const result = await updateProfileSettings('user-uuid-1', { alias: 'NewAlias' })
+    expect(mockUpdateProfileSettings).toHaveBeenCalledWith('user-uuid-1', { alias: 'NewAlias' })
+    expect(result).toEqual(updatedProfile)
+  })
+
+  it('propagates repository errors', async () => {
+    mockUpdateProfileSettings.mockRejectedValueOnce(
+      new Error('No se ha podido guardar tu perfil. Inténtalo de nuevo.')
+    )
+    await expect(updateProfileSettings('user-uuid-1', { alias: 'NewAlias' })).rejects.toThrow(
+      'No se ha podido guardar tu perfil. Inténtalo de nuevo.'
+    )
+  })
+
+  it('passes through partial updates (only mainGoal)', async () => {
+    const updatedProfile = { ...mockProfile, mainGoal: 'track_sessions' as const }
+    mockUpdateProfileSettings.mockResolvedValueOnce(updatedProfile)
+    const result = await updateProfileSettings('user-uuid-1', { mainGoal: 'track_sessions' })
+    expect(mockUpdateProfileSettings).toHaveBeenCalledWith('user-uuid-1', {
+      mainGoal: 'track_sessions',
+    })
+    expect(result.mainGoal).toBe('track_sessions')
+  })
+
+  it('accepts skinType: null to clear the field', async () => {
+    const updatedProfile = { ...mockProfile, skinType: null }
+    mockUpdateProfileSettings.mockResolvedValueOnce(updatedProfile)
+    const result = await updateProfileSettings('user-uuid-1', { skinType: null })
     expect(result.skinType).toBeNull()
   })
 })
