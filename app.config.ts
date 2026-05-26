@@ -1,5 +1,9 @@
 import type { ExpoConfig } from 'expo/config'
 
+// Bundle identifiers — confirm before submitting to App Store or Google Play.
+// Current values are provisional for internal distribution builds.
+const BUNDLE_ID = 'com.bronzeiq.app'
+
 const config: ExpoConfig = {
   name: 'Bronze IQ',
   slug: 'bronze-iq',
@@ -11,12 +15,13 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'com.bronzeiq.app',
+    bundleIdentifier: BUNDLE_ID,
   },
   android: {
-    package: 'com.bronzeiq.app',
+    package: BUNDLE_ID,
     adaptiveIcon: {
-      foregroundImage: './assets/adaptive-icon.png',
+      foregroundImage: './assets/android-icon-foreground.png',
+      monochromeImage: './assets/android-icon-monochrome.png',
       backgroundColor: '#FAF5EE',
     },
   },
@@ -36,6 +41,8 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  // extra.eas.projectId is populated automatically by `eas build:configure`
+  // after linking the project to an Expo account. Do not set manually.
 }
 
 export default config

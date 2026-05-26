@@ -59,7 +59,10 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build:preview:android": "eas build --platform android --profile preview",
+    "build:preview:ios": "eas build --platform ios --profile preview",
+    "build:preview:all": "eas build --platform all --profile preview"
   },
   "private": true,
   "type": "module"
