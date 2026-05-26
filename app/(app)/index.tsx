@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react'
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button } from '@/components/ui'
@@ -74,11 +74,21 @@ export default function HomeScreen() {
     router.push('/(app)/session-log')
   }
 
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
   const handleRetry = () => {
     if (!userId) return
     const today = getTodayString()
     void loadTodaySessions(userId, today)
     void loadRecentSessions(userId, 7)
+  }
+
+  const handleRefresh = async () => {
+    if (!userId) return
+    setIsRefreshing(true)
+    const today = getTodayString()
+    await Promise.all([loadTodaySessions(userId, today), loadRecentSessions(userId, 7)])
+    setIsRefreshing(false)
   }
 
   const weeklySessionsCount = recentSessions.length
@@ -114,6 +124,9 @@ export default function HomeScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={() => void handleRefresh()} />
+        }
       >
         {/* Header */}
         <View style={styles.header}>

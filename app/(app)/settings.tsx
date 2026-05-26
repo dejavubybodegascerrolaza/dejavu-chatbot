@@ -21,7 +21,7 @@ export default function SettingsScreen() {
 
   if (profileStatus === 'loading') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <LoadingState message="Cargando ajustes…" />
       </SafeAreaView>
     )
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <ErrorState
           message="No se ha podido cargar tu perfil. Inténtalo de nuevo."
           onRetry={() => router.back()}
@@ -39,19 +39,12 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <AppText variant="title">Ajustes</AppText>
-          <AppText variant="body" color="textSecondary" style={styles.subtitle}>
-            Gestiona tu perfil, privacidad y cuenta.
-          </AppText>
-        </View>
-
         {/* Profile section */}
         <View style={styles.section}>
           <AppText variant="label" color="textMuted" style={styles.sectionTitle}>
@@ -123,13 +116,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xl,
     paddingBottom: spacing.xxl,
-  },
-  header: {
-    gap: spacing.xs,
-    paddingTop: spacing.lg,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
   },
   section: {
     gap: spacing.sm,

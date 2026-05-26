@@ -1,8 +1,34 @@
 import React, { useEffect } from 'react'
-import { Stack, useRouter, useSegments } from 'expo-router'
+import { StyleSheet, View } from 'react-native'
+import { Stack, useRouter, useSegments, router as expoRouter } from 'expo-router'
+import type { ErrorBoundaryProps } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
+import { ErrorState } from '@/components/feedback'
+import { colors } from '@/design'
+
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return (
+    <View style={styles.errorContainer}>
+      <ErrorState
+        title="Algo salió mal"
+        message="La app ha encontrado un problema inesperado."
+        onRetry={() => {
+          void retry()
+          expoRouter.replace('/')
+        }}
+      />
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+})
 
 export default function RootLayout() {
   const initializeAuth = useAuthStore((s) => s.initializeAuth)

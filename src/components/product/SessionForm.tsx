@@ -1,6 +1,6 @@
 import React from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AppText, Button, Input } from '@/components/ui'
@@ -88,7 +88,6 @@ export function SessionForm({ onSave, onCancel, isSubmitting }: Props) {
   const {
     control,
     handleSubmit,
-    watch,
     setError,
     formState: { errors },
   } = useForm<SessionFormValues>({
@@ -102,7 +101,7 @@ export function SessionForm({ onSave, onCancel, isSubmitting }: Props) {
     },
   })
 
-  const durationText = watch('durationText')
+  const durationText = useWatch({ control, name: 'durationText' })
   const durationNum = parseInt(durationText, 10)
   const showDurationWarning = !isNaN(durationNum) && durationNum > 180
 

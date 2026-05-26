@@ -572,3 +572,49 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** No se añaden columnas ni tablas en la Fase 8. `getSessionById` usa `.eq('id', sessionId)` sobre la tabla existente. `deleteSession` usa `.delete().eq().eq()`.
 
 **Razón:** El historial es una operación de lectura/eliminación sobre datos ya existentes. No hay información nueva que persistir.
+
+---
+
+## Fase 10 — Estabilización MVP
+
+### Objetivo de la fase: solo estabilidad — CERRADO
+
+**Decisión:** La Fase 10 no añade features, no cambia el schema, no modifica el motor de recomendaciones, no toca auth/profile/sessions/privacy/recommendations más allá de ajustes mínimos de estabilidad.
+
+**Razón:** El MVP ya es funcionalmente completo tras la Fase 9. El siguiente paso antes de un build interno es endurecer lo construido, no inflarlo. La presión por añadir features antes de estabilizar genera deuda que crece exponencialmente.
+
+### Error Boundary — exportado desde `app/_layout.tsx` — CERRADO
+
+**Decisión:** Se exporta una función `ErrorBoundary` directamente desde `app/_layout.tsx` usando el patrón nativo de Expo Router v56. No se crea `app/+error.tsx` (convención Next.js incompatible con esta versión).
+
+**Razón:** Expo Router v56 soporta exportar `ErrorBoundary` desde cualquier archivo de ruta o layout. Al exportarlo desde `_layout.tsx`, cubre todos los errores no capturados en cualquier pantalla de la app. La función recibe `{ retry, error }` vía `ErrorBoundaryProps` tipado desde `expo-router`. Usa `ErrorState` del design system y evita dependencias externas.
+
+### Headers nativos solo en pantallas secundarias — CERRADO
+
+**Decisión:** Se activan headers nativos (`headerShown: true`) únicamente en las pantallas secundarias del Stack `(app)`: history, settings, edit-profile, disclaimer, deletion-request, session-detail/[id]. Home y session-log mantienen `headerShown: false`.
+
+**Razón:** Home es la pantalla principal — no necesita back button. session-log tiene flujo de formulario con su propio CTA de cancelar. Las pantallas secundarias se benefician del back button nativo y del título contextual sin añadir código de navegación manual. Colores del header aplicados con tokens del design system (`colors.background`, `colors.brand`) para coherencia visual.
+
+### `SafeAreaView edges` en pantallas con header nativo — CERRADO
+
+**Decisión:** Las pantallas con header nativo usan `edges={['left', 'right', 'bottom']}` en `SafeAreaView`, excluyendo el inset superior.
+
+**Razón:** El header nativo de React Navigation ya gestiona el status bar y el safe area superior. Si `SafeAreaView` aplica también el inset superior, el contenido queda separado del header por un gap visual incorrecto. Excluir `top` de las edges resuelve el doble-padding.
+
+### Pull-to-refresh con estado local `isRefreshing` — CERRADO
+
+**Decisión:** Home e History usan `useState(false)` local para `isRefreshing`, independiente de los estados del store (`todayStatus`, `historyStatus`).
+
+**Razón:** Los estados del store son granulares (`idle/loading/ready/empty/error`) y sirven para renderizar estados completos de pantalla. Derivar `refreshing` de ellos crearía comportamientos incorrectos: el spinner de pull-to-refresh aparecería también durante la carga inicial. Un booleano local `isRefreshing` controlado manualmente en el gesto captura exclusivamente el pull manual del usuario.
+
+### `useWatch` reemplaza `watch()` en SessionForm — CERRADO
+
+**Decisión:** `watch('durationText')` reemplazado por `useWatch({ control, name: 'durationText' })` en `src/components/product/SessionForm.tsx`.
+
+**Razón:** El React Compiler detecta que `watch()` de `useForm()` retorna una función que no puede memoizarse de forma segura, generando un warning de `react-hooks/incompatible-library`. `useWatch` es el hook dedicado de React Hook Form para suscripciones a valores individuales, compatible con el compilador. El comportamiento funcional es idéntico.
+
+### Stubs vacíos eliminados — CERRADO
+
+**Decisión:** Se eliminan 14 archivos que contenían únicamente comentarios de intención sin código real: stubs de `repositories/interfaces`, `repositories/mock`, `services`, hooks de módulos y stores duplicados.
+
+**Razón:** Los stubs fueron creados en la Fase 0 como placeholders de la arquitectura planeada. La arquitectura real de módulos no los usa (cada módulo tiene sus propios archivos `*.repository.ts`, `*.service.ts`, `*.store.ts`). Mantener archivos con solo comentarios genera ruido en búsquedas y da una imagen falsa de la estructura real.

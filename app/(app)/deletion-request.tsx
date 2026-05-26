@@ -34,7 +34,7 @@ export default function DeletionRequestScreen() {
 
   if (status === 'success') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.centeredContent}>
           <AppText variant="title" style={styles.centeredTitle}>
             Solicitud registrada
@@ -67,16 +67,12 @@ export default function DeletionRequestScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <AppText variant="title">Eliminar mis datos</AppText>
-        </View>
-
         <AppText variant="body" color="textSecondary">
           Puedes solicitar la eliminación de tus datos asociados a Bronze IQ. Durante el MVP, esta
           solicitud quedará registrada y podrá requerir revisión manual.
@@ -130,9 +126,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xl,
     paddingBottom: spacing.xxl,
-  },
-  header: {
-    paddingTop: spacing.lg,
   },
   notice: {
     fontStyle: 'italic',

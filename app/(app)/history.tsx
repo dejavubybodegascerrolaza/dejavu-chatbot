@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { AppText, Button } from '@/components/ui'
+import { Button } from '@/components/ui'
 import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
 import { SessionCard } from '@/components/product'
 import { colors, spacing } from '@/design'
@@ -20,9 +20,18 @@ export default function HistoryScreen() {
     void loadHistorySessions(userId)
   }, [userId, loadHistorySessions])
 
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
   const handleRetry = () => {
     if (!userId) return
     void loadHistorySessions(userId)
+  }
+
+  const handleRefresh = async () => {
+    if (!userId) return
+    setIsRefreshing(true)
+    await loadHistorySessions(userId)
+    setIsRefreshing(false)
   }
 
   const handleRegister = () => {
@@ -34,19 +43,15 @@ export default function HistoryScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={() => void handleRefresh()} />
+        }
       >
-        <View style={styles.header}>
-          <AppText variant="title">Historial</AppText>
-          <AppText variant="body" color="textSecondary" style={styles.subtitle}>
-            Revisa tus sesiones registradas y cómo ha evolucionado tu exposición.
-          </AppText>
-        </View>
-
         <Button
           label="Registrar exposición"
           variant="secondary"
@@ -98,13 +103,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xl,
     paddingBottom: spacing.xxl,
-  },
-  header: {
-    gap: spacing.xs,
-    paddingTop: spacing.lg,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
   },
   list: {
     gap: spacing.md,

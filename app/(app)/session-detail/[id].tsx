@@ -75,7 +75,7 @@ export default function SessionDetailScreen() {
 
   if (selectedSessionStatus === 'loading' || selectedSessionStatus === 'idle') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <LoadingState message="Cargando sesión…" />
       </SafeAreaView>
     )
@@ -83,7 +83,7 @@ export default function SessionDetailScreen() {
 
   if (selectedSessionStatus === 'missing') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <View style={styles.centeredContent}>
           <AppText variant="body" color="textSecondary" style={styles.missingText}>
             Esta sesión ya no está disponible.
@@ -102,7 +102,7 @@ export default function SessionDetailScreen() {
 
   if (selectedSessionStatus === 'error') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <ErrorState
           message={
             selectedSessionError ?? 'No se ha podido cargar esta sesión. Inténtalo de nuevo.'
@@ -120,19 +120,12 @@ export default function SessionDetailScreen() {
   const session = selectedSession
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <AppText variant="title">Detalle de sesión</AppText>
-          <AppText variant="body" color="textSecondary" style={styles.subtitle}>
-            Registro de exposición
-          </AppText>
-        </View>
-
         <Card variant="outlined" style={styles.detailCard}>
           <DetailRow label="Fecha" value={formatDisplayDate(session.sessionDate)} />
           <DetailRow label="Duración" value={`${session.durationMinutes} min`} />
@@ -188,13 +181,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xl,
     paddingBottom: spacing.xxl,
-  },
-  header: {
-    gap: spacing.xs,
-    paddingTop: spacing.lg,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
   },
   detailCard: {
     gap: spacing.md,

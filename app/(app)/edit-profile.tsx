@@ -95,17 +95,13 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <AppText variant="title">Editar perfil</AppText>
-        </View>
-
         {/* Alias */}
         <View style={styles.fieldGroup}>
           <AppText variant="label" color="textSecondary">
@@ -238,9 +234,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xl,
     paddingBottom: spacing.xxl,
-  },
-  header: {
-    paddingTop: spacing.lg,
   },
   fieldGroup: {
     gap: spacing.sm,
