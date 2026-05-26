@@ -526,3 +526,49 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** El store expone `recentSessions`, `recentSessionsStatus` y `recentSessionsError` como campos independientes de `todaySessions`/`status`/`error`.
 
 **Razón:** Home carga dos fuentes de datos independientes en paralelo (`loadTodaySessions` + `loadRecentSessions`). Un estado compartido crearía colisiones: si la primera carga termina antes, sobrescribiría el estado de la segunda. Campos independientes permiten `isLoading = todayStatus === 'loading' || recentStatus === 'loading'` sin ambigüedad.
+
+---
+
+## Fase 8 — Historial + Detalle + Eliminación
+
+### Historial construido después de Home real — CERRADO
+
+**Decisión:** `app/(app)/history.tsx` cargado en Fase 8, después de que Home y el motor de recomendaciones estén completos.
+
+**Razón:** El historial necesita `SessionCard`, `session.store` y la arquitectura de capas establecida en las Fases 6 y 7. Construirlo antes habría requerido mocks o duplicación.
+
+### Eliminación de sesión permitida — CERRADO
+
+**Decisión:** El usuario puede eliminar cualquier sesión propia desde la pantalla de detalle.
+
+**Razón:** Control del usuario sobre sus propios datos. Necesario para casos de error al registrar (duración equivocada, contexto incorrecto). Refuerza el mensaje de privacidad del MVP.
+
+### Edición de sesión aplazada — CERRADO
+
+**Decisión:** La pantalla de detalle no tiene opción de editar. Solo se puede eliminar y volver a registrar.
+
+**Razón:** La edición requiere re-validar todos los campos con el mismo formulario de `SessionForm`, gestionar estado de edición en el store y manejar la transición entre "modo vista" y "modo edición". El esfuerzo no está justificado para MVP cuando el usuario puede eliminar y crear de nuevo.
+
+### Filtros y calendario aplazados — CERRADO
+
+**Decisión:** El historial carga todas las sesiones sin filtro ni paginación.
+
+**Razón:** Para MVP el número de sesiones es pequeño. Filtros y paginación son mejoras de usabilidad que no son bloqueantes para validar el producto.
+
+### delete siempre filtrado por user_id — CERRADO
+
+**Decisión:** `SessionRepository.deleteSession(userId, sessionId)` siempre incluye `.eq('user_id', userId)` además de `.eq('id', sessionId)`.
+
+**Razón:** Defensa en profundidad. RLS ya protege el acceso, pero el doble filtro en la query asegura que no hay bug de aplicación que permita borrar la sesión de otro usuario aunque RLS fallara.
+
+### Estado `historyStatus`/`historySessions` independiente — CERRADO
+
+**Decisión:** El store expone campos dedicados `historySessions`, `historyStatus`, `historyError` para la pantalla de historial, separados del `status`/`todaySessions` que usa Home.
+
+**Razón:** Home y History están montadas simultáneamente en el Stack navigator. Un estado compartido crearía colisiones cuando History carga sus sesiones mientras Home sigue visible en el fondo. Patrón consistente con `recentSessions` (Fase 7).
+
+### No cambios de schema — CERRADO
+
+**Decisión:** No se añaden columnas ni tablas en la Fase 8. `getSessionById` usa `.eq('id', sessionId)` sobre la tabla existente. `deleteSession` usa `.delete().eq().eq()`.
+
+**Razón:** El historial es una operación de lectura/eliminación sobre datos ya existentes. No hay información nueva que persistir.

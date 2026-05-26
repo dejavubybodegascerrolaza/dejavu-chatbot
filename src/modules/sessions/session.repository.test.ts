@@ -2,6 +2,8 @@ import {
   getSessionsByUserId,
   getRecentSessionsByUserId,
   getTodaySessionsByUserId,
+  getSessionById,
+  deleteSession,
   createSession,
 } from './session.repository'
 import { supabase } from '@/lib/supabase'
@@ -13,6 +15,7 @@ const mockChain = {
   order: jest.fn(),
   insert: jest.fn(),
   single: jest.fn(),
+  delete: jest.fn(),
 }
 
 mockChain.select.mockReturnValue(mockChain)
@@ -20,6 +23,7 @@ mockChain.eq.mockReturnValue(mockChain)
 mockChain.gte.mockReturnValue(mockChain)
 mockChain.order.mockReturnValue(mockChain)
 mockChain.insert.mockReturnValue(mockChain)
+mockChain.delete.mockReturnValue(mockChain)
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -60,6 +64,7 @@ beforeEach(() => {
   mockChain.gte.mockReturnValue(mockChain)
   mockChain.order.mockReturnValue(mockChain)
   mockChain.insert.mockReturnValue(mockChain)
+  mockChain.delete.mockReturnValue(mockChain)
 })
 
 // getSessionsByUserId chains .order() twice; first returns chain, second resolves
@@ -149,6 +154,59 @@ describe('getTodaySessionsByUserId', () => {
     })
     await expect(getTodaySessionsByUserId('user-uuid-1', '2026-05-25')).rejects.toThrow(
       'La sesión ha caducado. Vuelve a iniciar sesión.'
+    )
+  })
+})
+
+describe('getSessionById', () => {
+  it('returns mapped session when found', async () => {
+    mockChain.single.mockResolvedValueOnce({ data: mockRow, error: null })
+    const result = await getSessionById('user-uuid-1', 'session-uuid-1')
+    expect(result).not.toBeNull()
+    expect(result?.sessionDate).toBe('2026-05-25')
+    expect(mockFrom).toHaveBeenCalledWith('exposure_sessions')
+  })
+
+  it('returns null when PGRST116 (no row found)', async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'PGRST116', message: 'The result contains 0 rows' },
+    })
+    const result = await getSessionById('user-uuid-1', 'session-uuid-1')
+    expect(result).toBeNull()
+  })
+
+  it('returns null when data is null without error', async () => {
+    mockChain.single.mockResolvedValueOnce({ data: null, error: null })
+    const result = await getSessionById('user-uuid-1', 'session-uuid-1')
+    expect(result).toBeNull()
+  })
+
+  it('throws mapped error on other Supabase error', async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'JWT expired', code: '401' },
+    })
+    await expect(getSessionById('user-uuid-1', 'session-uuid-1')).rejects.toThrow(
+      'La sesión ha caducado. Vuelve a iniciar sesión.'
+    )
+  })
+})
+
+describe('deleteSession', () => {
+  it('executes delete filtered by user_id and session id', async () => {
+    mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: null })
+    await expect(deleteSession('user-uuid-1', 'session-uuid-1')).resolves.toBeUndefined()
+    expect(mockFrom).toHaveBeenCalledWith('exposure_sessions')
+    expect(mockChain.delete).toHaveBeenCalled()
+  })
+
+  it('throws mapped error on delete failure', async () => {
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: { message: 'some db error', code: '500' } })
+    await expect(deleteSession('user-uuid-1', 'session-uuid-1')).rejects.toThrow(
+      'No se ha podido guardar la sesión. Inténtalo de nuevo.'
     )
   })
 })

@@ -155,6 +155,16 @@ export default function HomeScreen() {
           accessibilityLabel="Registrar una sesión de exposición solar"
         />
 
+        {/* History link */}
+        <Button
+          label="Ver historial"
+          variant="secondary"
+          size="md"
+          fullWidth
+          onPress={() => router.push('/(app)/history')}
+          accessibilityLabel="Ver historial completo de sesiones"
+        />
+
         {/* Sessions today */}
         <View style={styles.section}>
           <AppText variant="heading" style={styles.sectionTitle}>

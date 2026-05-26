@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet, View, Pressable } from 'react-native'
 import { Card, AppText } from '@/components/ui'
 import { spacing } from '@/design'
 import {
@@ -11,10 +11,11 @@ import type { ExposureSession } from '@/modules/sessions/session.types'
 
 type Props = {
   session: ExposureSession
+  onPress?: () => void
 }
 
-export function SessionCard({ session }: Props) {
-  return (
+export function SessionCard({ session, onPress }: Props) {
+  const content = (
     <Card variant="outlined">
       <View style={styles.header}>
         <AppText variant="bodyStrong">
@@ -48,6 +49,15 @@ export function SessionCard({ session }: Props) {
       ) : null}
     </Card>
   )
+
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} accessibilityRole="button">
+        {content}
+      </Pressable>
+    )
+  }
+  return content
 }
 
 const styles = StyleSheet.create({

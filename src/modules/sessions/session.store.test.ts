@@ -6,14 +6,25 @@ jest.mock('./session.service', () => ({
   loadTodaySessions: jest.fn(),
   loadSessions: jest.fn(),
   loadRecentSessions: jest.fn(),
+  loadSessionById: jest.fn(),
+  deleteExposureSession: jest.fn(),
   createExposureSession: jest.fn(),
 }))
 
 const mockLoadToday = SessionService.loadTodaySessions as jest.MockedFunction<
   typeof SessionService.loadTodaySessions
 >
+const mockLoadSessions = SessionService.loadSessions as jest.MockedFunction<
+  typeof SessionService.loadSessions
+>
 const mockLoadRecent = SessionService.loadRecentSessions as jest.MockedFunction<
   typeof SessionService.loadRecentSessions
+>
+const mockLoadById = SessionService.loadSessionById as jest.MockedFunction<
+  typeof SessionService.loadSessionById
+>
+const mockDeleteService = SessionService.deleteExposureSession as jest.MockedFunction<
+  typeof SessionService.deleteExposureSession
 >
 const mockCreate = SessionService.createExposureSession as jest.MockedFunction<
   typeof SessionService.createExposureSession
@@ -53,6 +64,12 @@ beforeEach(() => {
     recentSessions: [],
     recentSessionsStatus: 'idle',
     recentSessionsError: null,
+    historySessions: [],
+    historyStatus: 'idle',
+    historyError: null,
+    selectedSession: null,
+    selectedSessionStatus: 'idle',
+    selectedSessionError: null,
     error: null,
     isSubmitting: false,
   })
@@ -180,15 +197,140 @@ describe('useSessionStore — loadRecentSessions', () => {
   })
 })
 
+describe('useSessionStore — loadHistorySessions', () => {
+  it('sets historyStatus ready when sessions exist', async () => {
+    mockLoadSessions.mockResolvedValueOnce([mockSession])
+    await act(async () => {
+      await useSessionStore.getState().loadHistorySessions('user-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(state.historyStatus).toBe('ready')
+    expect(state.historySessions).toEqual([mockSession])
+    expect(state.historyError).toBeNull()
+  })
+
+  it('sets historyStatus empty when no sessions', async () => {
+    mockLoadSessions.mockResolvedValueOnce([])
+    await act(async () => {
+      await useSessionStore.getState().loadHistorySessions('user-uuid-1')
+    })
+    expect(useSessionStore.getState().historyStatus).toBe('empty')
+    expect(useSessionStore.getState().historySessions).toEqual([])
+  })
+
+  it('sets historyStatus error on failure', async () => {
+    mockLoadSessions.mockRejectedValueOnce(
+      new Error('No se ha podido cargar tu historial. Inténtalo de nuevo.')
+    )
+    await act(async () => {
+      await useSessionStore.getState().loadHistorySessions('user-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(state.historyStatus).toBe('error')
+    expect(state.historyError).toBe('No se ha podido cargar tu historial. Inténtalo de nuevo.')
+  })
+})
+
+describe('useSessionStore — loadSessionById', () => {
+  it('sets selectedSession ready when found', async () => {
+    mockLoadById.mockResolvedValueOnce(mockSession)
+    await act(async () => {
+      await useSessionStore.getState().loadSessionById('user-uuid-1', 'session-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(state.selectedSessionStatus).toBe('ready')
+    expect(state.selectedSession).toEqual(mockSession)
+  })
+
+  it('sets selectedSessionStatus missing when session not found', async () => {
+    mockLoadById.mockResolvedValueOnce(null)
+    await act(async () => {
+      await useSessionStore.getState().loadSessionById('user-uuid-1', 'session-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(state.selectedSessionStatus).toBe('missing')
+    expect(state.selectedSession).toBeNull()
+  })
+
+  it('sets selectedSessionStatus error on failure', async () => {
+    mockLoadById.mockRejectedValueOnce(
+      new Error('No se ha podido cargar esta sesión. Inténtalo de nuevo.')
+    )
+    await act(async () => {
+      await useSessionStore.getState().loadSessionById('user-uuid-1', 'session-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(state.selectedSessionStatus).toBe('error')
+    expect(state.selectedSessionError).toBe(
+      'No se ha podido cargar esta sesión. Inténtalo de nuevo.'
+    )
+  })
+})
+
+describe('useSessionStore — deleteSession', () => {
+  it('removes session from all lists on success', async () => {
+    useSessionStore.setState({
+      todaySessions: [mockSession],
+      recentSessions: [mockSession],
+      historySessions: [mockSession],
+      sessions: [mockSession],
+      selectedSession: mockSession,
+    })
+    mockDeleteService.mockResolvedValueOnce(undefined)
+    let result: boolean | undefined
+    await act(async () => {
+      result = await useSessionStore.getState().deleteSession('user-uuid-1', 'session-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(result).toBe(true)
+    expect(state.todaySessions).toEqual([])
+    expect(state.recentSessions).toEqual([])
+    expect(state.historySessions).toEqual([])
+    expect(state.sessions).toEqual([])
+    expect(state.selectedSession).toBeNull()
+  })
+
+  it('returns false and sets error on failure', async () => {
+    mockDeleteService.mockRejectedValueOnce(
+      new Error('No se ha podido eliminar la sesión. Inténtalo de nuevo.')
+    )
+    let result: boolean | undefined
+    await act(async () => {
+      result = await useSessionStore.getState().deleteSession('user-uuid-1', 'session-uuid-1')
+    })
+    const state = useSessionStore.getState()
+    expect(result).toBe(false)
+    expect(state.error).toBe('No se ha podido eliminar la sesión. Inténtalo de nuevo.')
+  })
+})
+
+describe('useSessionStore — clearSelectedSession', () => {
+  it('resets selectedSession state', () => {
+    useSessionStore.setState({
+      selectedSession: mockSession,
+      selectedSessionStatus: 'ready',
+      selectedSessionError: 'some error',
+    })
+    useSessionStore.getState().clearSelectedSession()
+    const state = useSessionStore.getState()
+    expect(state.selectedSession).toBeNull()
+    expect(state.selectedSessionStatus).toBe('idle')
+    expect(state.selectedSessionError).toBeNull()
+  })
+})
+
 describe('useSessionStore — clearSessions', () => {
-  it('resets all state including recentSessions to idle', () => {
+  it('resets all state including history and selected', () => {
     useSessionStore.setState({
       status: 'ready',
       todaySessions: [mockSession],
       sessions: [mockSession],
       recentSessions: [mockSession],
       recentSessionsStatus: 'ready',
-      recentSessionsError: null,
+      historySessions: [mockSession],
+      historyStatus: 'ready',
+      selectedSession: mockSession,
+      selectedSessionStatus: 'ready',
     })
     useSessionStore.getState().clearSessions()
     const state = useSessionStore.getState()
@@ -197,6 +339,10 @@ describe('useSessionStore — clearSessions', () => {
     expect(state.sessions).toEqual([])
     expect(state.recentSessions).toEqual([])
     expect(state.recentSessionsStatus).toBe('idle')
+    expect(state.historySessions).toEqual([])
+    expect(state.historyStatus).toBe('idle')
+    expect(state.selectedSession).toBeNull()
+    expect(state.selectedSessionStatus).toBe('idle')
     expect(state.error).toBeNull()
   })
 })

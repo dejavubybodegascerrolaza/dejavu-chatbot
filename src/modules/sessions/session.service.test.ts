@@ -1,9 +1,17 @@
-import { loadTodaySessions, loadSessions, createExposureSession } from './session.service'
+import {
+  loadTodaySessions,
+  loadSessions,
+  loadSessionById,
+  deleteExposureSession,
+  createExposureSession,
+} from './session.service'
 import * as SessionRepository from './session.repository'
 
 jest.mock('./session.repository', () => ({
   getSessionsByUserId: jest.fn(),
   getTodaySessionsByUserId: jest.fn(),
+  getSessionById: jest.fn(),
+  deleteSession: jest.fn(),
   createSession: jest.fn(),
 }))
 
@@ -12,6 +20,12 @@ const mockGetSessions = SessionRepository.getSessionsByUserId as jest.MockedFunc
 >
 const mockGetToday = SessionRepository.getTodaySessionsByUserId as jest.MockedFunction<
   typeof SessionRepository.getTodaySessionsByUserId
+>
+const mockGetById = SessionRepository.getSessionById as jest.MockedFunction<
+  typeof SessionRepository.getSessionById
+>
+const mockDelete = SessionRepository.deleteSession as jest.MockedFunction<
+  typeof SessionRepository.deleteSession
 >
 const mockCreate = SessionRepository.createSession as jest.MockedFunction<
   typeof SessionRepository.createSession
@@ -64,6 +78,38 @@ describe('loadSessions', () => {
     const result = await loadSessions('user-uuid-1')
     expect(result).toEqual([mockSession])
     expect(mockGetSessions).toHaveBeenCalledWith('user-uuid-1')
+  })
+})
+
+describe('loadSessionById', () => {
+  it('returns session when found', async () => {
+    mockGetById.mockResolvedValueOnce(mockSession)
+    const result = await loadSessionById('user-uuid-1', 'session-uuid-1')
+    expect(result).toEqual(mockSession)
+    expect(mockGetById).toHaveBeenCalledWith('user-uuid-1', 'session-uuid-1')
+  })
+
+  it('returns null when session does not exist', async () => {
+    mockGetById.mockResolvedValueOnce(null)
+    const result = await loadSessionById('user-uuid-1', 'session-uuid-1')
+    expect(result).toBeNull()
+  })
+})
+
+describe('deleteExposureSession', () => {
+  it('delegates to repository with userId and sessionId', async () => {
+    mockDelete.mockResolvedValueOnce(undefined)
+    await expect(deleteExposureSession('user-uuid-1', 'session-uuid-1')).resolves.toBeUndefined()
+    expect(mockDelete).toHaveBeenCalledWith('user-uuid-1', 'session-uuid-1')
+  })
+
+  it('propagates repository error', async () => {
+    mockDelete.mockRejectedValueOnce(
+      new Error('No se ha podido eliminar la sesión. Inténtalo de nuevo.')
+    )
+    await expect(deleteExposureSession('user-uuid-1', 'session-uuid-1')).rejects.toThrow(
+      'No se ha podido eliminar la sesión. Inténtalo de nuevo.'
+    )
   })
 })
 

@@ -21,6 +21,17 @@ export async function loadRecentSessions(
   return SessionRepository.getRecentSessionsByUserId(userId, fromDate)
 }
 
+export async function loadSessionById(
+  userId: string,
+  sessionId: string
+): Promise<ExposureSession | null> {
+  return SessionRepository.getSessionById(userId, sessionId)
+}
+
+export async function deleteExposureSession(userId: string, sessionId: string): Promise<void> {
+  return SessionRepository.deleteSession(userId, sessionId)
+}
+
 export async function createExposureSession(
   userId: string,
   rawInput: CreateExposureSessionInput

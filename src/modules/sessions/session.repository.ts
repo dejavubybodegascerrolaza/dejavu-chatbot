@@ -64,6 +64,39 @@ export async function getRecentSessionsByUserId(
   return (data ?? []).map(mapSessionRowToSession)
 }
 
+export async function getSessionById(
+  userId: string,
+  sessionId: string
+): Promise<ExposureSession | null> {
+  const { data, error } = await supabase
+    .from('exposure_sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('id', sessionId)
+    .single()
+
+  if (error) {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code: unknown }).code)
+        : ''
+    if (code === 'PGRST116') return null
+    throw new Error(mapRepositoryError(error))
+  }
+  if (!data) return null
+  return mapSessionRowToSession(data)
+}
+
+export async function deleteSession(userId: string, sessionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('exposure_sessions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('id', sessionId)
+
+  if (error) throw new Error(mapRepositoryError(error))
+}
+
 export async function createSession(
   userId: string,
   input: CreateExposureSessionInput
