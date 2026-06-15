@@ -660,3 +660,15 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** El motor de gamificación es una función pura del historial de sesiones + estado del plan. Home carga el historial completo (`loadHistorySessions`) para calcular racha y logros reales; la pantalla de logros reutiliza ese mismo `historySessions` del store. No se persiste estado de gamificación derivado.
 
 **Razón:** Mantener el cálculo puro lo hace 100% testeable y consistente entre Home y la pantalla de logros (una sola fuente de verdad). La recomendación sigue usando su ventana de 7 días; la gamificación necesita más historia, de ahí la carga completa. Persistir logros desbloqueados y celebraciones es un paso siguiente, no un requisito para entregar el valor de la racha.
+
+### Sesión en directo: motor puro + alertas en la capa de UI — CERRADO
+
+**Decisión:** El estado de la sesión en directo (`src/modules/live`) es una state machine pura sin temporizadores: `computeLiveSessionState` recibe `elapsedSeconds` y devuelve estado, tiempo restante, progreso y contador de giros. La pantalla `live-session.tsx` posee el `setInterval` (1 s) y dispara las alertas hápticas y el banner de giro al detectar transiciones.
+
+**Razón:** Separar el cálculo (puro, testeable) del efecto (timers, haptics, nativo) permite cubrir toda la lógica de seguridad con tests deterministas y mantener la pantalla como una capa fina. Las alertas se anclan a transiciones de estado primitivas (`status`, `flipCount`), evitando efectos repetidos.
+
+### Alerta de seguridad por vibración, sin notificaciones de fondo (de momento) — CERRADO
+
+**Decisión:** El aviso de "cúbrete"/"date la vuelta" usa `expo-haptics` (vibración) con la pantalla mantenida activa por `expo-keep-awake`. No se añade `expo-notifications` en esta fase.
+
+**Razón:** La sesión en directo es un flujo en primer plano con la pantalla encendida; la vibración cubre el caso de uso ("beep para girarte"/"cúbrete") sin la complejidad de permisos y configuración de notificaciones, ni assets de sonido. Las notificaciones en segundo plano quedan como mejora siguiente para avisar con la app minimizada.

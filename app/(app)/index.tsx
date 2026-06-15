@@ -278,11 +278,21 @@ export default function HomeScreen() {
           />
         ) : null}
 
+        {/* Live session CTA */}
+        <Button
+          label="Sesión en directo"
+          variant="primary"
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/(app)/live-session')}
+          accessibilityLabel="Iniciar una sesión de exposición en directo"
+        />
+
         {/* Register CTA */}
         <Button
           label="Registrar exposición"
-          variant="primary"
-          size="lg"
+          variant="secondary"
+          size="md"
           fullWidth
           onPress={handleRegister}
           accessibilityLabel="Registrar una sesión de exposición solar"

@@ -10,6 +10,10 @@ export default function AppLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="session-log" options={{ headerShown: false }} />
       <Stack.Screen
+        name="live-session"
+        options={{ headerShown: true, title: 'Sesión en directo', headerStyle, headerTintColor }}
+      />
+      <Stack.Screen
         name="history"
         options={{ headerShown: true, title: 'Historial', headerStyle, headerTintColor }}
       />
