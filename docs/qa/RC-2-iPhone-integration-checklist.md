@@ -76,11 +76,14 @@ EXPO_PUBLIC_APP_ENV=development
 Before building, verify the Supabase project is configured correctly.
 
 - [ ] Project created at supabase.com (Free tier is sufficient)
-- [ ] All 4 migrations applied in order:
-  - `profiles` table with RLS enabled
-  - `exposure_sessions` table with RLS enabled
-  - `consent_log` table (append-only) with RLS enabled
-  - `deletion_requests` table with RLS enabled
+- [ ] Both migration files applied in order (`supabase/migrations/`):
+  - `20260525000000_initial_schema.sql`
+  - `20260615120000_tanning_plans.sql`
+- [ ] The 4 tables exist, each with RLS enabled:
+  - `profiles` (consent stored here as `consent_given_at` / `consent_version` columns)
+  - `exposure_sessions`
+  - `deletion_requests`
+  - `tanning_plans`
 - [ ] Authentication → Email provider enabled
 - [ ] Authentication → Site URL set (can be `bronzeiq://` for native)
 - [ ] RLS sanity check: In Supabase SQL editor, confirm `SELECT * FROM profiles` as anon returns 0 rows (no bypass)
