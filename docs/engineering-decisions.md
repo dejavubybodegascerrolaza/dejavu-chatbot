@@ -636,3 +636,15 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** El tiempo de quemado (modelo MED) y la estimación de vitamina D viven en `src/modules/sun` como funciones puras, sin dependencias de red ni de React, separadas del módulo de datos `uv`.
 
 **Razón:** La lógica científica es la parte más crítica y debe tener cobertura de ramas alta y tests deterministas offline. Separarla de la capa de datos (que sí depende de la red) permite testearla sin mocks de `fetch` y reutilizarla en cualquier contexto (Home, futura app de Watch, notificaciones). Ambos motores se documentan y etiquetan explícitamente como estimaciones orientativas de bienestar, no diagnóstico — la frontera regulatoria de producto sanitario queda fuera de alcance.
+
+### Plan de bronceado: optimizar el máximo seguro, nunca la dosis — CERRADO
+
+**Decisión:** El motor `src/modules/plan/plan.engine.ts` genera un plan progresivo que optimiza el tono máximo alcanzable **sin quemar**. Cada sesión usa solo la dosis diaria segura (fracción del umbral MED del módulo `sun`), con días de descanso, y nunca recomienda superar el techo seguro por fototipo. Si el objetivo lo excede, devuelve `goal_exceeds_safe_ceiling` y propone la meta segura más alta.
+
+**Razón:** Una app que gamifica "maximizar moreno" con incentivos a exceder la exposición es carne de rechazo en App Store (guideline de daño físico), un riesgo reputacional/legal (melanoma) y lo contrario de "máxima confianza". El valor de mercado de esta categoría está en ser el líder _responsable_. Optimizar el máximo seguro conserva toda la dopamina del progreso/ETA sin cruzar la línea. La frontera de diagnóstico (producto sanitario regulado) sigue fuera de alcance.
+
+### Plan derivado, no persistido (de momento) — CERRADO
+
+**Decisión:** El plan es una función pura determinista de (perfil, objetivo, tono actual, fecha, UV típico). El store `plan.store.ts` guarda solo las elecciones del usuario (objetivo y tono actual) en memoria; el `TanPlanResult` se deriva con `useMemo` en Home y en la pantalla del plan.
+
+**Razón:** Mantener el motor puro lo hace 100% testeable offline y reproducible, y evita guardar datos derivados que se desincronizan. La persistencia en Supabase y el seguimiento de adherencia (sesiones completadas vs planificadas) son un paso siguiente natural, no un requisito para entregar el valor del ETA y los hitos.

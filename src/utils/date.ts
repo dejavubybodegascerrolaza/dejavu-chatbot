@@ -9,3 +9,10 @@ export function formatDisplayDate(isoDate: string): string {
 export function getTodayISODate(): string {
   return new Date().toISOString().slice(0, 10)
 }
+
+/** Adds (or subtracts, with a negative value) whole days to an ISO date. */
+export function addDaysToISODate(isoDate: string, days: number): string {
+  const base = new Date(`${isoDate.slice(0, 10)}T00:00:00.000Z`)
+  base.setUTCDate(base.getUTCDate() + days)
+  return base.toISOString().slice(0, 10)
+}

@@ -14,6 +14,10 @@ export default function AppLayout() {
         options={{ headerShown: true, title: 'Historial', headerStyle, headerTintColor }}
       />
       <Stack.Screen
+        name="plan"
+        options={{ headerShown: true, title: 'Mi plan', headerStyle, headerTintColor }}
+      />
+      <Stack.Screen
         name="settings"
         options={{ headerShown: true, title: 'Ajustes', headerStyle, headerTintColor }}
       />

@@ -8,6 +8,7 @@ import {
   BurnTimeCard,
   RecommendationCard,
   SessionCard,
+  TanPlanCard,
   UvIndexCard,
   VitaminDCard,
   WeeklySummaryCard,
@@ -22,6 +23,7 @@ import { generateRecommendation } from '@/modules/recommendations/recommendation
 import { LEVEL_SUBTEXTS } from '@/modules/recommendations/recommendation.labels'
 import { useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
+import { generateTanPlan, usePlanStore } from '@/modules/plan'
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10)
@@ -53,6 +55,9 @@ export default function HomeScreen() {
   const requestLocation = useLocationStore((s) => s.requestLocation)
   const locationStatus = useLocationStore((s) => s.status)
   const coordinates = useLocationStore((s) => s.coordinates)
+
+  const planGoal = usePlanStore((s) => s.goalLevel)
+  const planCurrentLevel = usePlanStore((s) => s.currentLevel)
 
   const userId = user?.id
 
@@ -94,6 +99,18 @@ export default function HomeScreen() {
       today: { uvIndexNow: currentUv },
     })
   }, [profile, recentSessions, currentUv])
+
+  const maxUvToday = uvForecast?.maxToday ?? null
+
+  const tanPlan = useMemo(() => {
+    if (planGoal === null) return null
+    return generateTanPlan({
+      skinType: profile?.skinType ?? null,
+      currentLevel: planCurrentLevel,
+      goalLevel: planGoal,
+      ...(maxUvToday !== null ? { typicalUvIndex: maxUvToday } : {}),
+    })
+  }, [planGoal, planCurrentLevel, profile?.skinType, maxUvToday])
 
   const isLoading =
     profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'
@@ -209,6 +226,9 @@ export default function HomeScreen() {
             onCtaPress={handleRegister}
           />
         ) : null}
+
+        {/* Tanning plan */}
+        <TanPlanCard plan={tanPlan} onPress={() => router.push('/(app)/plan')} />
 
         {/* Vitamin D from today's exposure */}
         {uvForecast !== null && todayMinutes > 0 ? (
