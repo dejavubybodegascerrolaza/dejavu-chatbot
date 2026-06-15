@@ -43,6 +43,16 @@ const SKIN_TYPE_OPTIONS: Array<{ label: string; description: string; value: Skin
   { label: 'Tipo VI', description: 'Muy oscura', value: 6 },
 ]
 
+// ─── Step progress ───────────────────────────────────────────────────────────
+
+// Steps 4–7 are the profile setup steps. Progress is shown as "X de 4".
+const PROFILE_STEP_LABEL: Record<number, string> = {
+  4: 'Perfil · 1 de 4',
+  5: 'Perfil · 2 de 4',
+  6: 'Perfil · 3 de 4',
+  7: 'Perfil · 4 de 4',
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function OnboardingScreen() {
@@ -191,6 +201,9 @@ export default function OnboardingScreen() {
       <Screen padded>
         <View style={styles.stepContainer}>
           <View style={styles.stepContent}>
+            <AppText variant="caption" color="textMuted">
+              {PROFILE_STEP_LABEL[4]}
+            </AppText>
             <AppText variant="title">¿Cómo quieres que te llamemos?</AppText>
             <AppText variant="body" color="textSecondary" style={styles.stepMessage}>
               Puedes usar un alias, apodo o lo que prefieras. No necesitamos tu nombre completo.
@@ -234,7 +247,13 @@ export default function OnboardingScreen() {
       <Screen scroll padded>
         <View style={styles.stepContainer}>
           <View style={styles.stepContent}>
-            <FormSection title="¿Qué buscas controlar mejor?">
+            <AppText variant="caption" color="textMuted">
+              {PROFILE_STEP_LABEL[5]}
+            </AppText>
+            <FormSection
+              title="¿Qué buscas controlar mejor?"
+              description="Tu elección orienta los mensajes y sugerencias de Bronze IQ."
+            >
               {MAIN_GOAL_OPTIONS.map((option) => (
                 <ProfileOptionCard
                   key={option.value}
@@ -267,6 +286,9 @@ export default function OnboardingScreen() {
       <Screen scroll padded>
         <View style={styles.stepContainer}>
           <View style={styles.stepContent}>
+            <AppText variant="caption" color="textMuted">
+              {PROFILE_STEP_LABEL[6]}
+            </AppText>
             <FormSection
               title="¿Cómo suele reaccionar tu piel al sol?"
               description="Esta información ayuda a que Bronze IQ sea más prudente. No sustituye una valoración médica."
@@ -302,9 +324,12 @@ export default function OnboardingScreen() {
     <Screen scroll padded>
       <View style={styles.stepContainer}>
         <View style={styles.stepContent}>
+          <AppText variant="caption" color="textMuted">
+            {PROFILE_STEP_LABEL[7]}
+          </AppText>
           <FormSection
             title="Fototipo de piel"
-            description="Puedes indicar tu fototipo si lo conoces. Es opcional y solo se usará para ajustar la prudencia de las recomendaciones."
+            description="Indicar tu fototipo mejora la calibración de las estimaciones orientativas. Sin él, Bronze IQ aplica un margen conservador. Es opcional y puedes cambiarlo después."
           >
             {SKIN_TYPE_OPTIONS.map((option) => (
               <ProfileOptionCard

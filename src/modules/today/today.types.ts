@@ -7,6 +7,7 @@ import type { UvForecast } from '../uv/uv.types'
 import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
 import type { PlanAdherence } from '../adherence/adherence.types'
+import type { CalibrationProfile } from '../calibration/calibration.types'
 
 /**
  * Driving state for the primary Home decision card.
@@ -52,6 +53,8 @@ export type TodayDecision = {
   recoveryStatus: RecoveryStatus
   /** Plan adherence derived from actual session history vs. projected cadence. */
   planAdherence: PlanAdherence | null
+  /** Calibration profile derived from skin type and sun sensitivity. */
+  calibrationProfile: CalibrationProfile | null
 }
 
 export type TodayDecisionInput = {

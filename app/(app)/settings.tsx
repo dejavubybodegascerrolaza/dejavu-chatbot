@@ -13,6 +13,7 @@ import {
   SUN_SENSITIVITY_LABELS,
   getSkinTypeLabel,
 } from '@/modules/profile/profile.labels'
+import { buildCalibrationProfile } from '@/modules/calibration'
 import { useNotificationStore } from '@/modules/notifications/notifications.store'
 
 export default function SettingsScreen() {
@@ -68,6 +69,7 @@ export default function SettingsScreen() {
             goalLabel={MAIN_GOAL_LABELS[profile.mainGoal]}
             sensitivityLabel={SUN_SENSITIVITY_LABELS[profile.sunSensitivity]}
             skinTypeLabel={getSkinTypeLabel(profile.skinType)}
+            calibrationSummary={buildCalibrationProfile(profile).summary}
           />
           <SettingsRow title="Editar perfil" onPress={() => router.push('/(app)/edit-profile')} />
         </View>

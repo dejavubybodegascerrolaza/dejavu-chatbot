@@ -6,7 +6,9 @@ import { generateTanPlan } from '../plan/plan.engine'
 import { calculateSafetyStreak } from '../gamification/gamification.engine'
 import { buildRecoveryStatus } from '../recovery/recovery.engine'
 import { buildPlanAdherence } from '../adherence/adherence.engine'
+import { buildCalibrationProfile } from '../calibration/calibration.engine'
 import type { RecommendationLevel } from '../recommendations/recommendation.types'
+import type { MainGoal } from '../profile/profile.types'
 import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
 import type { TodayDecision, TodayDecisionInput, TodayDecisionState } from './today.types'
@@ -61,6 +63,24 @@ const UNAVAILABLE: TodayDecision = {
   todayMinutes: 0,
   recoveryStatus: NULL_RECOVERY,
   planAdherence: null,
+  calibrationProfile: null,
+}
+
+// ── mainGoal-aware CTA ────────────────────────────────────────────────────────
+
+/**
+ * Adjusts the primary CTA label based on the user's stated goal.
+ * Users who want to avoid overexposure see "Ver mi historial" in the ready
+ * state — reinforcing that checking their history is the meaningful action,
+ * not immediately adding more exposure.
+ */
+function resolveCtaLabel(
+  mainGoal: MainGoal,
+  defaultCta: string,
+  state: TodayDecisionState
+): string {
+  if (state === 'ready' && mainGoal === 'avoid_overexposure') return 'Ver mi historial'
+  return defaultCta
 }
 
 // ── Location-needed copy ──────────────────────────────────────────────────────
@@ -169,17 +189,24 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
         })
       : null
 
-  // 10. Copy — location_needed overrides the recommendation title and explanation
-  //    so the user knows the decision is less accurate without UV data.
+  // 10. Calibration profile from skin type + sensitivity
+  const calibrationProfile = buildCalibrationProfile({
+    skinType: profile.skinType,
+    sunSensitivity: profile.sunSensitivity,
+  })
+
+  // 11. Copy — location_needed overrides the recommendation title and explanation
+  //     so the user knows the decision is less accurate without UV data.
   const title = state === 'location_needed' ? LOCATION_COPY.title : recommendation.title
   const explanation =
     state === 'location_needed' ? LOCATION_COPY.explanation : recommendation.message
+  const bestNextAction = resolveCtaLabel(profile.mainGoal, recommendation.ctaLabel, state)
 
   return {
     state,
     title,
     explanation,
-    bestNextAction: recommendation.ctaLabel,
+    bestNextAction,
     reasons: recommendation.reasons,
     disclaimer: recommendation.disclaimer,
     recommendationLevel: recommendation.level,
@@ -195,5 +222,6 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     todayMinutes,
     recoveryStatus,
     planAdherence,
+    calibrationProfile,
   }
 }

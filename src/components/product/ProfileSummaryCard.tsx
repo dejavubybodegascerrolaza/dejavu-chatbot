@@ -8,6 +8,7 @@ type Props = {
   goalLabel: string
   sensitivityLabel: string
   skinTypeLabel: string
+  calibrationSummary?: string | null
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
@@ -23,7 +24,13 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function ProfileSummaryCard({ alias, goalLabel, sensitivityLabel, skinTypeLabel }: Props) {
+export function ProfileSummaryCard({
+  alias,
+  goalLabel,
+  sensitivityLabel,
+  skinTypeLabel,
+  calibrationSummary,
+}: Props) {
   return (
     <Card variant="outlined" style={styles.card}>
       <AppText variant="bodyStrong" style={styles.alias}>
@@ -32,6 +39,11 @@ export function ProfileSummaryCard({ alias, goalLabel, sensitivityLabel, skinTyp
       <SummaryRow label="Objetivo" value={goalLabel} />
       <SummaryRow label="Sensibilidad" value={sensitivityLabel} />
       <SummaryRow label="Fototipo" value={skinTypeLabel} />
+      {calibrationSummary != null ? (
+        <AppText variant="caption" color="textMuted" style={styles.calibration}>
+          {calibrationSummary}
+        </AppText>
+      ) : null}
     </Card>
   )
 }
@@ -55,5 +67,9 @@ const styles = StyleSheet.create({
   value: {
     flex: 2,
     textAlign: 'right',
+  },
+  calibration: {
+    lineHeight: 18,
+    marginTop: spacing.xs,
   },
 })
