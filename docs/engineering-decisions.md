@@ -618,3 +618,21 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** Se eliminan 14 archivos que contenían únicamente comentarios de intención sin código real: stubs de `repositories/interfaces`, `repositories/mock`, `services`, hooks de módulos y stores duplicados.
 
 **Razón:** Los stubs fueron creados en la Fase 0 como placeholders de la arquitectura planeada. La arquitectura real de módulos no los usa (cada módulo tiene sus propios archivos `*.repository.ts`, `*.service.ts`, `*.store.ts`). Mantener archivos con solo comentarios genera ruido en búsquedas y da una imagen falsa de la estructura real.
+
+### Índice UV real vía Open-Meteo (key-less) — CERRADO
+
+**Decisión:** El índice UV se obtiene de la API de Open-Meteo (`api.open-meteo.com/v1/forecast`), sin clave de API, en `src/modules/uv/uv.repository.ts`. La respuesta se valida con Zod antes de mapearse al dominio.
+
+**Razón:** Open-Meteo es gratuita y no requiere clave para uso no comercial, por lo que no se añade ningún secreto al cliente — coherente con la regla de que solo la anon key de Supabase vive en el bundle. La validación Zod evita que una respuesta malformada rompa la app. El motor de recomendaciones pasa de un proxy de "hora del día" a UV real mediante `RecommendationInput.today.uvIndexNow`, que tiene prioridad sobre el valor manual.
+
+### Geolocalización solo en memoria, permiso degradable — CERRADO
+
+**Decisión:** `expo-location` se envuelve en `src/modules/location`. Las coordenadas se mantienen solo en el store de Zustand (memoria) y se usan exclusivamente para consultar el UV; no se persisten ni se envían a Supabase. Si el usuario deniega el permiso, Home muestra un aviso y sigue operativo sin UV en tiempo real.
+
+**Razón:** La ubicación es un dato sensible; no hay razón para almacenarlo. El permiso denegado no debe bloquear la app — el UV es una mejora, no un requisito. `LocationPermissionError` distingue denegación de error genérico para dar el mensaje correcto.
+
+### Motores científicos puros y separados de los datos — CERRADO
+
+**Decisión:** El tiempo de quemado (modelo MED) y la estimación de vitamina D viven en `src/modules/sun` como funciones puras, sin dependencias de red ni de React, separadas del módulo de datos `uv`.
+
+**Razón:** La lógica científica es la parte más crítica y debe tener cobertura de ramas alta y tests deterministas offline. Separarla de la capa de datos (que sí depende de la red) permite testearla sin mocks de `fetch` y reutilizarla en cualquier contexto (Home, futura app de Watch, notificaciones). Ambos motores se documentan y etiquetan explícitamente como estimaciones orientativas de bienestar, no diagnóstico — la frontera regulatoria de producto sanitario queda fuera de alcance.

@@ -222,9 +222,10 @@ export function generateRecommendation(input: RecommendationInput): Recommendati
   let level = levelFromLoad(weeklyLoad)
   const reasons: string[] = [reasonFromLoad(weeklyLoad)]
 
-  // Regla 4 — UV >= 8 today forces minimum high_caution
-  const uvOverride =
-    today?.uvIndexManual !== undefined && today.uvIndexManual !== null && today.uvIndexManual >= 8
+  // Regla 4 — UV >= 8 today forces minimum high_caution.
+  // Real-time UV index takes precedence over a manual value when present.
+  const todayUv = today?.uvIndexNow ?? today?.uvIndexManual ?? null
+  const uvOverride = todayUv !== null && todayUv >= 8
 
   if (uvOverride) {
     level = maxLevel(level, 'high_caution')

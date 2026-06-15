@@ -23,6 +23,8 @@ export type RecommendationInput = {
   sessionsLast7Days: RecommendationSessionInput[]
   today?: {
     uvIndexManual?: number | null
+    /** Real-time UV index from the UV service; takes precedence over manual. */
+    uvIndexNow?: number | null
   }
   now?: Date
 }

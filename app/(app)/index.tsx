@@ -2,11 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { AppText, Button } from '@/components/ui'
+import { AppText, Button, Card } from '@/components/ui'
 import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
 import {
+  BurnTimeCard,
   RecommendationCard,
   SessionCard,
+  UvIndexCard,
+  VitaminDCard,
   WeeklySummaryCard,
   SafetyNote,
 } from '@/components/product'
@@ -17,6 +20,8 @@ import { useSessionStore } from '@/modules/sessions/session.store'
 import { SENSATION_LABELS } from '@/modules/sessions/session.labels'
 import { generateRecommendation } from '@/modules/recommendations/recommendation.service'
 import { LEVEL_SUBTEXTS } from '@/modules/recommendations/recommendation.labels'
+import { useUvStore } from '@/modules/uv'
+import { useLocationStore } from '@/modules/location'
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10)
@@ -41,6 +46,14 @@ export default function HomeScreen() {
     clearSessions,
   } = useSessionStore()
 
+  const uvForecast = useUvStore((s) => s.forecast)
+  const uvStatus = useUvStore((s) => s.status)
+  const loadForecast = useUvStore((s) => s.loadForecast)
+
+  const requestLocation = useLocationStore((s) => s.requestLocation)
+  const locationStatus = useLocationStore((s) => s.status)
+  const coordinates = useLocationStore((s) => s.coordinates)
+
   const userId = user?.id
 
   useEffect(() => {
@@ -53,6 +66,22 @@ export default function HomeScreen() {
     }
   }, [userId, loadTodaySessions, loadRecentSessions, clearSessions])
 
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      const coords = await requestLocation()
+      if (!cancelled && coords) {
+        await loadForecast(coords)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [requestLocation, loadForecast])
+
+  const currentUv = uvForecast?.current.uvIndex ?? null
+
   const recommendation = useMemo(() => {
     if (!profile) return null
     return generateRecommendation({
@@ -62,8 +91,9 @@ export default function HomeScreen() {
         skinType: profile.skinType,
       },
       sessionsLast7Days: recentSessions,
+      today: { uvIndexNow: currentUv },
     })
-  }, [profile, recentSessions])
+  }, [profile, recentSessions, currentUv])
 
   const isLoading =
     profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'
@@ -87,7 +117,14 @@ export default function HomeScreen() {
     if (!userId) return
     setIsRefreshing(true)
     const today = getTodayString()
-    await Promise.all([loadTodaySessions(userId, today), loadRecentSessions(userId, 7)])
+    const tasks: Promise<unknown>[] = [
+      loadTodaySessions(userId, today),
+      loadRecentSessions(userId, 7),
+    ]
+    if (coordinates) {
+      tasks.push(loadForecast(coordinates))
+    }
+    await Promise.all(tasks)
     setIsRefreshing(false)
   }
 
@@ -95,6 +132,9 @@ export default function HomeScreen() {
   const weeklyTotalMinutes = recentSessions.reduce((sum, s) => sum + s.durationMinutes, 0)
   const lastSession = recentSessions[0] ?? null
   const lastSensationLabel = lastSession ? SENSATION_LABELS[lastSession.sensationAfter] : null
+
+  const todayMinutes = todaySessions.reduce((sum, s) => sum + s.durationMinutes, 0)
+  const skinType = profile?.skinType ?? null
 
   const alias = profile?.alias ?? ''
   const level = recommendation?.level ?? 'low'
@@ -118,6 +158,9 @@ export default function HomeScreen() {
     )
   }
 
+  const showUvUnavailable =
+    uvForecast === null && (uvStatus === 'error' || locationStatus === 'denied')
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -136,6 +179,25 @@ export default function HomeScreen() {
           </AppText>
         </View>
 
+        {/* Live UV */}
+        {uvForecast !== null ? <UvIndexCard forecast={uvForecast} /> : null}
+
+        {showUvUnavailable ? (
+          <Card variant="outlined">
+            <AppText variant="bodyStrong">Índice UV no disponible</AppText>
+            <AppText variant="caption" color="textSecondary" style={styles.uvUnavailableText}>
+              {locationStatus === 'denied'
+                ? 'Activa el permiso de ubicación para ver el índice UV de tu zona en tiempo real.'
+                : 'No hemos podido obtener el índice UV ahora mismo. Desliza para reintentar.'}
+            </AppText>
+          </Card>
+        ) : null}
+
+        {/* Skin clock */}
+        {uvForecast !== null ? (
+          <BurnTimeCard skinType={skinType} uvIndex={uvForecast.current.uvIndex} />
+        ) : null}
+
         {/* Recommendation */}
         {recommendation !== null ? (
           <RecommendationCard
@@ -145,6 +207,15 @@ export default function HomeScreen() {
             reasons={recommendation.reasons}
             ctaLabel={recommendation.ctaLabel}
             onCtaPress={handleRegister}
+          />
+        ) : null}
+
+        {/* Vitamin D from today's exposure */}
+        {uvForecast !== null && todayMinutes > 0 ? (
+          <VitaminDCard
+            skinType={skinType}
+            uvIndex={uvForecast.current.uvIndex}
+            minutes={todayMinutes}
           />
         ) : null}
 
@@ -254,6 +325,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: spacing.xs,
+  },
+  uvUnavailableText: {
+    marginTop: spacing.xs,
+    lineHeight: 18,
   },
   section: {
     gap: spacing.md,

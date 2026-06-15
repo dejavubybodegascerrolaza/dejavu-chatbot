@@ -33,6 +33,13 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-font',
     [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'Bronze IQ usa tu ubicación para mostrarte el índice UV real de tu zona.',
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         image: './assets/splash-icon.png',
