@@ -63,6 +63,8 @@ export default function HomeScreen() {
 
   const planGoal = usePlanStore((s) => s.goalLevel)
   const planCurrentLevel = usePlanStore((s) => s.currentLevel)
+  const loadPlan = usePlanStore((s) => s.loadPlan)
+  const resetPlan = usePlanStore((s) => s.reset)
 
   const userId = user?.id
 
@@ -72,10 +74,20 @@ export default function HomeScreen() {
     void loadTodaySessions(userId, today)
     void loadRecentSessions(userId, 7)
     void loadHistorySessions(userId)
+    void loadPlan(userId)
     return () => {
       clearSessions()
+      resetPlan()
     }
-  }, [userId, loadTodaySessions, loadRecentSessions, loadHistorySessions, clearSessions])
+  }, [
+    userId,
+    loadTodaySessions,
+    loadRecentSessions,
+    loadHistorySessions,
+    loadPlan,
+    clearSessions,
+    resetPlan,
+  ])
 
   useEffect(() => {
     let cancelled = false

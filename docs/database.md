@@ -206,5 +206,28 @@ Applied to:
 
 - `profiles`
 - `exposure_sessions`
+- `tanning_plans`
 
 Not applied to `deletion_requests` (no `updated_at` column — the row is effectively append-only from the client's perspective).
+
+---
+
+## Table: `tanning_plans`
+
+Added in `20260615120000_tanning_plans.sql`. Persists the user's tanning goal so
+the plan (ETA, milestones) survives app restarts. **One plan per user** —
+`user_id` is `unique`, so the client upserts on conflict.
+
+| Column          | Type        | Notes                                  |
+| --------------- | ----------- | -------------------------------------- |
+| `id`            | uuid PK     | `gen_random_uuid()`                    |
+| `user_id`       | uuid unique | FK → `auth.users`, `on delete cascade` |
+| `goal_level`    | text        | one of the 5 tan levels                |
+| `current_level` | text        | starting tan, default `natural`        |
+| `start_date`    | date        | default `current_date`                 |
+| `created_at`    | timestamptz | default `now()`                        |
+| `updated_at`    | timestamptz | maintained by `set_updated_at()`       |
+
+RLS: SELECT / INSERT / UPDATE / DELETE restricted to `user_id = auth.uid()`.
+The cascade on `auth.users` delete means account deletion removes the plan
+automatically (no service_role step needed).

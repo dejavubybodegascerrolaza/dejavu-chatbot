@@ -1,3 +1,5 @@
+jest.mock('@/lib/supabase', () => ({ supabase: {} }))
+
 import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { TanPlanCard } from './TanPlanCard'

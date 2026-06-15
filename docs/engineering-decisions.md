@@ -672,3 +672,21 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** El aviso de "cúbrete"/"date la vuelta" usa `expo-haptics` (vibración) con la pantalla mantenida activa por `expo-keep-awake`. No se añade `expo-notifications` en esta fase.
 
 **Razón:** La sesión en directo es un flujo en primer plano con la pantalla encendida; la vibración cubre el caso de uso ("beep para girarte"/"cúbrete") sin la complejidad de permisos y configuración de notificaciones, ni assets de sonido. Las notificaciones en segundo plano quedan como mejora siguiente para avisar con la app minimizada.
+
+### Persistir solo el plan; rachas/logros derivados — CERRADO
+
+**Decisión:** Se persiste en Supabase únicamente el plan de bronceado (tabla `tanning_plans`, una fila por usuario, upsert). Las rachas y los logros no tienen tabla propia: se calculan a partir de `exposure_sessions`, que ya se persiste.
+
+**Razón:** Evita estado duplicado y desincronización. La gamificación es una proyección pura de datos ya duraderos, así que persistirla por separado solo añadiría una fuente de verdad redundante. El plan, en cambio, era el único estado de usuario que vivía solo en memoria.
+
+### Plan: una fila por usuario con upsert — CERRADO
+
+**Decisión:** `tanning_plans.user_id` es `unique`; el repositorio hace `upsert(..., { onConflict: 'user_id' })`. RLS cubre las cuatro operaciones para `user_id = auth.uid()` y el FK con `on delete cascade` elimina el plan al borrar la cuenta.
+
+**Razón:** El modelo de producto es "un objetivo activo por persona", así que una fila por usuario es lo natural y simplifica la lógica (no hay que gestionar histórico de planes). El cascade evita un paso server-side con `service_role` para el borrado, manteniendo la regla de no usar `service_role` en el cliente.
+
+### Store del plan con userId interno y persistencia optimista — CERRADO
+
+**Decisión:** `usePlanStore` guarda el `userId` al cargar (`loadPlan`) y lo usa internamente en `setGoal`/`setCurrentLevel`/`clearPlan`, de modo que la UI no tiene que pasar el id en cada llamada. Los cambios se aplican en memoria de forma optimista y luego se persisten.
+
+**Razón:** Mantiene las pantallas simples (`setGoal(level)`), evita props de id repetidas y da feedback inmediato. Si la persistencia falla, se registra el error sin revertir la elección local (aceptable para un dato no crítico; el siguiente guardado reintenta).

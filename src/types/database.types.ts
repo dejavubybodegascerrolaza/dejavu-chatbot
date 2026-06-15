@@ -116,6 +116,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tanning_plans: {
+        Row: {
+          id: string
+          user_id: string
+          goal_level: string
+          current_level: string
+          start_date: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          goal_level: string
+          current_level?: string
+          start_date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          goal_level?: string
+          current_level?: string
+          start_date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

@@ -66,7 +66,7 @@ export default function PlanScreen() {
               label={TAN_LEVEL_LABELS[level]}
               description={TAN_LEVEL_DESCRIPTIONS[level]}
               selected={goalLevel === level}
-              onPress={() => setGoal(level)}
+              onPress={() => void setGoal(level)}
             />
           ))}
         </View>

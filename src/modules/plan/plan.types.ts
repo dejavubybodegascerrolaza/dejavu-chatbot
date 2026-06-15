@@ -5,6 +5,24 @@ export type TanLevel = 'natural' | 'light_golden' | 'golden' | 'bronze' | 'deep_
 
 export type TanPlanStatus = 'ok' | 'goal_below_current' | 'goal_exceeds_safe_ceiling'
 
+/** The persisted tanning plan (the user's choices saved to Supabase). */
+export type TanningPlan = {
+  id: string
+  userId: string
+  goalLevel: TanLevel
+  currentLevel: TanLevel
+  startDate: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** The fields a user can change about their plan. */
+export type TanningPlanInput = {
+  goalLevel: TanLevel
+  currentLevel: TanLevel
+  startDate: string
+}
+
 export type PlanMilestone = {
   level: TanLevel
   /** ISO date this milestone is reached following the safe plan. */
