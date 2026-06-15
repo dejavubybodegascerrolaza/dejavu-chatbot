@@ -4,7 +4,7 @@ const config: Config = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@supabase/.*|zustand|zod))',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-native-async-storage/.*|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@supabase/.*|zustand|zod))',
   ],
   testMatch: [
     '**/__tests__/**/*.test.ts',
@@ -14,6 +14,7 @@ const config: Config = {
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@react-native-async-storage/async-storage$': '<rootDir>/src/__mocks__/async-storage.ts',
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
   passWithNoTests: true,

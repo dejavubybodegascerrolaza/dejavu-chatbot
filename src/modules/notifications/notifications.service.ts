@@ -45,6 +45,10 @@ export async function scheduleNotifications(specs: NotificationSpec[]): Promise<
   }
 }
 
+export async function cancelNotification(id: string): Promise<void> {
+  await ExpoNotifications.cancelScheduledNotificationAsync(id).catch(() => undefined)
+}
+
 export async function cancelAllNotifications(): Promise<void> {
   await ExpoNotifications.cancelAllScheduledNotificationsAsync()
 }

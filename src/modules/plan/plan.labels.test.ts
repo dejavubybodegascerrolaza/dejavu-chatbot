@@ -14,7 +14,7 @@ describe('TAN_LEVEL_LABELS', () => {
 
 describe('formatEtaDate', () => {
   it('returns a not-reachable message for null', () => {
-    expect(formatEtaDate(null)).toBe('No alcanzable de forma segura')
+    expect(formatEtaDate(null)).toBe('No alcanzable con el plan conservador')
   })
 
   it('formats an ISO date as DD/MM/YYYY', () => {
@@ -40,6 +40,6 @@ describe('formatPlanDuration', () => {
 describe('PLAN_STATUS_MESSAGES', () => {
   it('has a message for each status', () => {
     expect(PLAN_STATUS_MESSAGES.ok).toContain('alcanzable')
-    expect(PLAN_STATUS_MESSAGES.goal_exceeds_safe_ceiling).toContain('segura')
+    expect(PLAN_STATUS_MESSAGES.goal_exceeds_safe_ceiling).toContain('techo estimado')
   })
 })

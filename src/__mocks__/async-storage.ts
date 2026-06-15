@@ -1,0 +1,32 @@
+/** In-memory AsyncStorage mock for Jest. Resets between test files automatically. */
+const store: Record<string, string> = {}
+
+export default {
+  getItem: jest.fn((key: string) => Promise.resolve(store[key] ?? null)),
+  setItem: jest.fn((key: string, value: string) => {
+    store[key] = value
+    return Promise.resolve()
+  }),
+  removeItem: jest.fn((key: string) => {
+    delete store[key]
+    return Promise.resolve()
+  }),
+  clear: jest.fn(() => {
+    Object.keys(store).forEach((key) => delete store[key])
+    return Promise.resolve()
+  }),
+  getAllKeys: jest.fn(() => Promise.resolve(Object.keys(store))),
+  multiGet: jest.fn((keys: string[]) =>
+    Promise.resolve(keys.map((key) => [key, store[key] ?? null] as [string, string | null]))
+  ),
+  multiSet: jest.fn((pairs: [string, string][]) => {
+    pairs.forEach(([key, value]) => {
+      store[key] = value
+    })
+    return Promise.resolve()
+  }),
+  multiRemove: jest.fn((keys: string[]) => {
+    keys.forEach((key) => delete store[key])
+    return Promise.resolve()
+  }),
+}

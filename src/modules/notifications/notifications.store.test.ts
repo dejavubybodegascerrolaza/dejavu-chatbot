@@ -2,6 +2,7 @@ jest.mock('./notifications.service', () => ({
   getNotificationPermission: jest.fn(),
   requestNotificationPermission: jest.fn(),
   scheduleNotifications: jest.fn(),
+  cancelNotification: jest.fn(),
   cancelAllNotifications: jest.fn(),
 }))
 
@@ -19,6 +20,9 @@ const mockSchedule = NotificationService.scheduleNotifications as jest.MockedFun
 >
 const mockCancel = NotificationService.cancelAllNotifications as jest.MockedFunction<
   typeof NotificationService.cancelAllNotifications
+>
+const mockCancelOne = NotificationService.cancelNotification as jest.MockedFunction<
+  typeof NotificationService.cancelNotification
 >
 
 const BASE_INPUT = {
@@ -113,9 +117,35 @@ describe('useNotificationStore', () => {
     expect(useNotificationStore.getState().preferences.sessionRemindersEnabled).toBe(true)
   })
 
-  it('updates sessionReminderHour preference', () => {
+  it('cancels the associated notification when a boolean channel is toggled off', () => {
+    mockCancelOne.mockResolvedValueOnce(undefined)
+    useNotificationStore.getState().setPreference('uvAlertsEnabled', false)
+    expect(mockCancelOne).toHaveBeenCalledWith('uv-peak-alert')
+  })
+
+  it('cancels streak-reminder when streakRemindersEnabled is toggled off', () => {
+    mockCancelOne.mockResolvedValueOnce(undefined)
+    useNotificationStore.getState().setPreference('streakRemindersEnabled', false)
+    expect(mockCancelOne).toHaveBeenCalledWith('streak-reminder')
+  })
+
+  it('does not cancel any notification when toggling a channel on', () => {
+    useNotificationStore.setState({
+      preferences: {
+        uvAlertsEnabled: false,
+        sessionRemindersEnabled: true,
+        streakRemindersEnabled: true,
+        sessionReminderHour: 10,
+      },
+    })
+    useNotificationStore.getState().setPreference('uvAlertsEnabled', true)
+    expect(mockCancelOne).not.toHaveBeenCalled()
+  })
+
+  it('does not cancel a notification when changing a non-boolean preference', () => {
     useNotificationStore.getState().setPreference('sessionReminderHour', 9)
     expect(useNotificationStore.getState().preferences.sessionReminderHour).toBe(9)
+    expect(mockCancelOne).not.toHaveBeenCalled()
   })
 
   it('calls cancelAllNotifications on cancelAll', async () => {

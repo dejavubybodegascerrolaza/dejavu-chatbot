@@ -3,8 +3,18 @@ import {
   calculateWeeklyExposureLoad,
   generateRecommendation,
 } from './recommendation.service'
-import { FORBIDDEN_WORDS } from './recommendation.rules'
 import type { RecommendationInput, RecommendationSessionInput } from './recommendation.types'
+
+/** Words that must never appear in recommendation output. Kept here so the
+ *  test fails if copy accidentally makes medical claims or safety guarantees. */
+const FORBIDDEN_WORDS: string[] = [
+  'seguro',
+  'sin riesgo',
+  'garantizado',
+  'garantiza',
+  'perfecto',
+  'puedes tomar el sol sin problema',
+]
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -46,7 +56,7 @@ function makeInput(overrides: Partial<RecommendationInput> = {}): Recommendation
 
 function containsForbiddenWord(text: string): boolean {
   const lower = text.toLowerCase()
-  return FORBIDDEN_WORDS.some((word) => {
+  return FORBIDDEN_WORDS.some((word: string) => {
     const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     return new RegExp(`\\b${escaped}\\b`, 'i').test(lower)
   })

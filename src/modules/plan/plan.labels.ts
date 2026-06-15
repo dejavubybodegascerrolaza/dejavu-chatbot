@@ -14,19 +14,19 @@ export const TAN_LEVEL_DESCRIPTIONS: Record<TanLevel, string> = {
   light_golden: 'Un brillo cálido y sutil.',
   golden: 'Un dorado visible y uniforme.',
   bronze: 'Un bronceado marcado.',
-  deep_bronze: 'El tono más intenso, solo seguro para pieles que lo toleran.',
+  deep_bronze: 'El tono más intenso. Requiere una piel que lo tolere bien y mucha constancia.',
 }
 
 export const PLAN_STATUS_MESSAGES: Record<TanPlanStatus, string> = {
-  ok: 'Tu objetivo es alcanzable de forma segura siguiendo el plan.',
+  ok: 'Tu objetivo parece alcanzable siguiendo el plan de forma conservadora. Escucha siempre las señales de tu piel.',
   goal_below_current: 'Tu objetivo ya está por debajo de tu tono actual. Elige uno más intenso.',
   goal_exceeds_safe_ceiling:
-    'Tu objetivo supera lo que tu piel puede broncear sin riesgo. Te proponemos la meta más intensa que sí es segura para ti.',
+    'Tu objetivo supera el techo estimado para tu fototipo. Te sugerimos el objetivo más ambicioso que el modelo estima como alcanzable para ti.',
 }
 
 /** "el 12 de julio de 2026" from an ISO date. */
 export function formatEtaDate(isoDate: string | null): string {
-  if (isoDate === null) return 'No alcanzable de forma segura'
+  if (isoDate === null) return 'No alcanzable con el plan conservador'
   return formatDisplayDate(isoDate)
 }
 

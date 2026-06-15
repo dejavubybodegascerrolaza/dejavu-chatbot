@@ -17,7 +17,7 @@ export default function DeletionRequestScreen() {
   const handleRequest = () => {
     Alert.alert(
       '¿Solicitar eliminación?',
-      'Registraremos una solicitud de eliminación de tus datos. Durante el MVP, el procesamiento puede requerir revisión manual.',
+      'Registraremos una solicitud de eliminación de tus datos. La solicitud será procesada en un máximo de 30 días.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -40,8 +40,8 @@ export default function DeletionRequestScreen() {
             Solicitud registrada
           </AppText>
           <AppText variant="body" color="textSecondary" style={styles.centeredText}>
-            Hemos guardado tu solicitud de eliminación. El procesamiento puede requerir revisión
-            manual durante el MVP.
+            Hemos registrado tu solicitud. La procesaremos en un máximo de 30 días conforme a
+            nuestra política de privacidad.
           </AppText>
           <View style={styles.successActions}>
             <Button
@@ -74,14 +74,13 @@ export default function DeletionRequestScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppText variant="body" color="textSecondary">
-          Puedes solicitar la eliminación de tus datos asociados a Bronze IQ. Durante el MVP, esta
-          solicitud quedará registrada y podrá requerir revisión manual.
+          Puedes solicitar la eliminación de tus datos asociados a Bronze IQ. La solicitud quedará
+          registrada y será procesada en un máximo de 30 días.
         </AppText>
 
         <AppText variant="body" color="textMuted" style={styles.notice}>
-          Esta acción no elimina automáticamente tu cuenta en este momento. Registra una solicitud
-          de eliminación para que pueda ser procesada conforme a la política de privacidad del
-          producto.
+          Esta acción no elimina tu cuenta de forma inmediata. Registra la solicitud y la
+          tramitaremos conforme a nuestra política de privacidad.
         </AppText>
 
         {status === 'error' ? (

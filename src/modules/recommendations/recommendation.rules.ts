@@ -53,14 +53,5 @@ export const WEEKLY_LOAD_THRESHOLDS: Array<{ max: number; level: RecommendationL
   { max: 260, level: 'high_caution' },
 ]
 
-export const FORBIDDEN_WORDS = [
-  'seguro',
-  'sin riesgo',
-  'garantizado',
-  'garantiza',
-  'perfecto',
-  'puedes tomar el sol sin problema',
-]
-
 export const DISCLAIMER =
   'Orientación general, no médica. Bronze IQ no garantiza seguridad frente a la exposición solar.'
