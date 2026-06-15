@@ -4,7 +4,7 @@ import { router } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Screen, AppText, Button, Input } from '@/components/ui'
-import { spacing } from '@/design'
+import { colors, spacing } from '@/design'
 import { loginSchema } from '@/modules/auth/auth.schema'
 import type { LoginFormValues } from '@/modules/auth/auth.schema'
 import { useAuthStore } from '@/modules/auth/auth.store'
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   errorBanner: {
-    backgroundColor: '#F6D6D2',
+    backgroundColor: colors.dangerSoft,
     borderRadius: 8,
     padding: spacing.md,
   },

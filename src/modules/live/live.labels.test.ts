@@ -21,7 +21,7 @@ describe('formatClock', () => {
 describe('live status copy', () => {
   it('has a label and message for every status', () => {
     expect(LIVE_STATUS_LABELS.danger).toBe('Cúbrete ya')
-    expect(LIVE_STATUS_MESSAGES.caution).toContain('dosis segura')
+    expect(LIVE_STATUS_MESSAGES.caution).toContain('techo estimado')
     expect(LIVE_STATUS_MESSAGES.no_risk).toContain('UV')
   })
 })

@@ -155,7 +155,7 @@ export default function LiveSessionScreen() {
             <>
               <View style={styles.metaRow}>
                 <AppText variant="caption" color="textSecondary">
-                  Tiempo seguro restante
+                  Tiempo estimado restante
                 </AppText>
                 <AppText variant="bodyStrong" color={isDanger ? 'danger' : 'brand'}>
                   {formatClock(state.remainingSafeSeconds)}

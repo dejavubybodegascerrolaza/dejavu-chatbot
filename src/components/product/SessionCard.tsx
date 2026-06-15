@@ -52,7 +52,11 @@ export function SessionCard({ session, onPress }: Props) {
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button">
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Sesión del ${session.sessionDate}, ${session.durationMinutes} minutos, ${CONTEXT_LABELS[session.context]}`}
+      >
         {content}
       </Pressable>
     )

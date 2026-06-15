@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { AppText } from '@/components/ui'
 import { SessionForm } from '@/components/product'
-import { spacing } from '@/design'
+import { colors, spacing } from '@/design'
 import { useAuthStore } from '@/modules/auth/auth.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
 import type { CreateExposureSessionInput } from '@/modules/sessions/session.schema'
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   },
   errorBanner: {
     marginHorizontal: spacing.md,
-    backgroundColor: '#F6D6D2',
+    backgroundColor: colors.dangerSoft,
     borderRadius: 8,
     padding: spacing.md,
     marginBottom: spacing.sm,

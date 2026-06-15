@@ -51,11 +51,8 @@ export default function PlanScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppText variant="body" color="textSecondary">
-          Elige tu objetivo de tono. Bronze IQ calcula el camino más rápido que tu piel puede seguir{' '}
-          <AppText variant="bodyStrong" color="textSecondary">
-            sin quemarse
-          </AppText>
-          , y el día en que lo alcanzas.
+          Elige tu objetivo de tono. Bronze IQ estima el número de sesiones y el tiempo orientativo
+          que puede llevarte lograrlo según tu fototipo. Es una proyección, no una garantía.
         </AppText>
 
         {/* Goal picker */}
@@ -96,7 +93,7 @@ export default function PlanScreen() {
 
                 <View style={styles.metaRow}>
                   <AppText variant="caption" color="textSecondary">
-                    Dosis diaria segura
+                    Tiempo diario estimado
                   </AppText>
                   <AppText variant="caption" color="textPrimary">
                     {formatMinutes(plan.dailySafeMinutes)}
@@ -130,10 +127,9 @@ export default function PlanScreen() {
             Cómo lo calculamos
           </AppText>
           <AppText variant="caption" color="textSecondary" style={styles.scienceText}>
-            Cada sesión usa solo la dosis segura para tu fototipo (una fracción de tu umbral de
-            quemadura), repartida en días con descanso para que la piel se recupere. El plan nunca
-            recomienda superar ese límite. Es una proyección orientativa de bienestar, no una
-            promesa médica ni un diagnóstico.
+            Cada sesión utiliza un tiempo estimado para tu fototipo (una fracción del umbral de
+            quemadura), distribuido en días con descanso para que la piel se recupere. Es una
+            proyección orientativa de bienestar, no una promesa médica ni un diagnóstico.
           </AppText>
         </Card>
 

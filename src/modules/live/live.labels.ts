@@ -2,17 +2,17 @@ import type { BadgeLevel } from '@/components/ui'
 import type { LiveStatus } from './live.types'
 
 export const LIVE_STATUS_LABELS: Record<LiveStatus, string> = {
-  no_risk: 'Sin riesgo UV',
-  safe: 'En tiempo seguro',
-  caution: 'Has llegado a tu dosis segura',
+  no_risk: 'Índice UV nulo',
+  safe: 'Dentro del tiempo estimado',
+  caution: 'Has alcanzado el techo estimado',
   danger: 'Cúbrete ya',
 }
 
 export const LIVE_STATUS_MESSAGES: Record<LiveStatus, string> = {
-  no_risk: 'El índice UV es nulo: no hay riesgo de quemadura ahora mismo.',
-  safe: 'Disfruta con prudencia. Te avisaremos al llegar a tu dosis segura.',
-  caution: 'Has alcanzado tu dosis segura. Lo prudente es buscar sombra o cubrirte.',
-  danger: 'Has superado tu umbral de quemadura. Sal del sol y protege tu piel.',
+  no_risk: 'El índice UV es nulo ahora mismo. La intensidad solar es mínima.',
+  safe: 'Disfruta con prudencia. Te avisaremos al acercarte al techo estimado.',
+  caution: 'Has alcanzado el techo estimado. Lo prudente es buscar sombra o cubrirte.',
+  danger: 'Has superado el umbral de quemadura estimado. Sal del sol y protege tu piel.',
 }
 
 export const LIVE_STATUS_TO_BADGE: Record<LiveStatus, BadgeLevel> = {
