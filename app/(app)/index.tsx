@@ -27,6 +27,7 @@ import { useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
 import { generateTanPlan, usePlanStore } from '@/modules/plan'
 import { buildGamificationSummary } from '@/modules/gamification'
+import { useNotificationStore } from '@/modules/notifications/notifications.store'
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10)
@@ -66,6 +67,10 @@ export default function HomeScreen() {
   const loadPlan = usePlanStore((s) => s.loadPlan)
   const resetPlan = usePlanStore((s) => s.reset)
 
+  const scheduleNotifications = useNotificationStore((s) => s.scheduleAll)
+  const requestNotificationPermission = useNotificationStore((s) => s.requestPermission)
+  const notificationPermission = useNotificationStore((s) => s.permission)
+
   const userId = user?.id
 
   useEffect(() => {
@@ -96,12 +101,16 @@ export default function HomeScreen() {
       if (!cancelled && coords) {
         await loadForecast(coords)
       }
+      // Ask for notification permission after location (non-blocking)
+      if (!cancelled && notificationPermission === 'unknown') {
+        await requestNotificationPermission()
+      }
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [requestLocation, loadForecast])
+  }, [requestLocation, loadForecast, notificationPermission, requestNotificationPermission])
 
   const currentUv = uvForecast?.current.uvIndex ?? null
 
@@ -143,6 +152,15 @@ export default function HomeScreen() {
       }),
     [historySessions, planGoal]
   )
+
+  // Schedule notifications whenever key data changes
+  useEffect(() => {
+    void scheduleNotifications({
+      uvPeakWindow: uvForecast?.peakWindow ?? null,
+      streak: gamification.safetyStreak,
+      hasActivePlan: planGoal !== null,
+    })
+  }, [scheduleNotifications, uvForecast, gamification.safetyStreak, planGoal])
 
   const isLoading =
     profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'

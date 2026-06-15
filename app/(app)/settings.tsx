@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button } from '@/components/ui'
 import { LoadingState, ErrorState } from '@/components/feedback'
-import { ProfileSummaryCard, SettingsRow } from '@/components/product'
+import { NotificationToggleRow, ProfileSummaryCard, SettingsRow } from '@/components/product'
 import { colors, spacing } from '@/design'
 import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
@@ -13,11 +13,24 @@ import {
   SUN_SENSITIVITY_LABELS,
   getSkinTypeLabel,
 } from '@/modules/profile/profile.labels'
+import { useNotificationStore } from '@/modules/notifications/notifications.store'
 
 export default function SettingsScreen() {
   const { logout, isSubmitting: isLoggingOut } = useAuthStore()
   const profile = useProfileStore((s) => s.profile)
   const profileStatus = useProfileStore((s) => s.status)
+
+  const notificationPermission = useNotificationStore((s) => s.permission)
+  const notificationPrefs = useNotificationStore((s) => s.preferences)
+  const refreshPermission = useNotificationStore((s) => s.refreshPermission)
+  const requestPermission = useNotificationStore((s) => s.requestPermission)
+  const setPreference = useNotificationStore((s) => s.setPreference)
+
+  useEffect(() => {
+    void refreshPermission()
+  }, [refreshPermission])
+
+  const notificationsGranted = notificationPermission === 'granted'
 
   if (profileStatus === 'loading') {
     return (
@@ -57,6 +70,50 @@ export default function SettingsScreen() {
             skinTypeLabel={getSkinTypeLabel(profile.skinType)}
           />
           <SettingsRow title="Editar perfil" onPress={() => router.push('/(app)/edit-profile')} />
+        </View>
+
+        {/* Notifications section */}
+        <View style={styles.section}>
+          <AppText variant="label" color="textMuted" style={styles.sectionTitle}>
+            NOTIFICACIONES
+          </AppText>
+          {notificationPermission === 'denied' ? (
+            <AppText variant="caption" color="textMuted">
+              Los permisos de notificación están desactivados. Actívalos en los ajustes del sistema
+              para recibir alertas de Bronze IQ.
+            </AppText>
+          ) : null}
+          {notificationPermission === 'unknown' ? (
+            <Button
+              label="Activar notificaciones"
+              variant="secondary"
+              size="md"
+              fullWidth
+              onPress={() => void requestPermission()}
+              accessibilityLabel="Solicitar permiso de notificaciones"
+            />
+          ) : null}
+          <NotificationToggleRow
+            title="Alertas de pico UV"
+            description="Aviso 30 min antes de que llegue el UV alto"
+            value={notificationPrefs.uvAlertsEnabled}
+            onValueChange={(v) => setPreference('uvAlertsEnabled', v)}
+            disabled={!notificationsGranted}
+          />
+          <NotificationToggleRow
+            title="Recordatorio de sesión"
+            description="Aviso diario cuando tienes un plan activo"
+            value={notificationPrefs.sessionRemindersEnabled}
+            onValueChange={(v) => setPreference('sessionRemindersEnabled', v)}
+            disabled={!notificationsGranted}
+          />
+          <NotificationToggleRow
+            title="Protección de racha"
+            description="Recordatorio a las 17h para no romper tu racha"
+            value={notificationPrefs.streakRemindersEnabled}
+            onValueChange={(v) => setPreference('streakRemindersEnabled', v)}
+            disabled={!notificationsGranted}
+          />
         </View>
 
         {/* Legal section */}

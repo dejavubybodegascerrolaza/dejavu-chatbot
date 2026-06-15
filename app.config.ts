@@ -40,6 +40,14 @@ const config: ExpoConfig = {
       },
     ],
     [
+      'expo-notifications',
+      {
+        icon: './assets/icon.png',
+        color: '#C4996A',
+        defaultChannel: 'default',
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         image: './assets/splash-icon.png',
