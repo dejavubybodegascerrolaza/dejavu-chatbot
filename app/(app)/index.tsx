@@ -21,12 +21,12 @@ import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
 import { SENSATION_LABELS } from '@/modules/sessions/session.labels'
-import { generateRecommendation } from '@/modules/recommendations/recommendation.service'
 import { LEVEL_SUBTEXTS } from '@/modules/recommendations/recommendation.labels'
 import { useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
-import { generateTanPlan, usePlanStore } from '@/modules/plan'
+import { usePlanStore } from '@/modules/plan'
 import { buildGamificationSummary } from '@/modules/gamification'
+import { buildTodayDecision } from '@/modules/today'
 import { useNotificationStore } from '@/modules/notifications/notifications.store'
 
 function getTodayString(): string {
@@ -112,32 +112,30 @@ export default function HomeScreen() {
     }
   }, [requestLocation, loadForecast, notificationPermission, requestNotificationPermission])
 
-  const currentUv = uvForecast?.current.uvIndex ?? null
-
-  const recommendation = useMemo(() => {
-    if (!profile) return null
-    return generateRecommendation({
-      profile: {
-        mainGoal: profile.mainGoal,
-        sunSensitivity: profile.sunSensitivity,
-        skinType: profile.skinType,
-      },
-      sessionsLast7Days: recentSessions,
-      today: { uvIndexNow: currentUv },
-    })
-  }, [profile, recentSessions, currentUv])
-
-  const maxUvToday = uvForecast?.maxToday ?? null
-
-  const tanPlan = useMemo(() => {
-    if (planGoal === null) return null
-    return generateTanPlan({
-      skinType: profile?.skinType ?? null,
-      currentLevel: planCurrentLevel,
-      goalLevel: planGoal,
-      ...(maxUvToday !== null ? { typicalUvIndex: maxUvToday } : {}),
-    })
-  }, [planGoal, planCurrentLevel, profile?.skinType, maxUvToday])
+  const todayDecision = useMemo(
+    () =>
+      buildTodayDecision({
+        profile,
+        recentSessions,
+        todaySessions,
+        historySessions,
+        uvForecast,
+        locationStatus,
+        planGoal,
+        planCurrentLevel,
+        today: getTodayString(),
+      }),
+    [
+      profile,
+      recentSessions,
+      todaySessions,
+      historySessions,
+      uvForecast,
+      locationStatus,
+      planGoal,
+      planCurrentLevel,
+    ]
+  )
 
   const gamification = useMemo(
     () =>
@@ -157,10 +155,10 @@ export default function HomeScreen() {
   useEffect(() => {
     void scheduleNotifications({
       uvPeakWindow: uvForecast?.peakWindow ?? null,
-      streak: gamification.safetyStreak,
-      hasActivePlan: planGoal !== null,
+      streak: todayDecision.safetyStreak,
+      hasActivePlan: todayDecision.hasActivePlan,
     })
-  }, [scheduleNotifications, uvForecast, gamification.safetyStreak, planGoal])
+  }, [scheduleNotifications, uvForecast, todayDecision.safetyStreak, todayDecision.hasActivePlan])
 
   const isLoading =
     profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'
@@ -204,7 +202,7 @@ export default function HomeScreen() {
   const skinType = profile?.skinType ?? null
 
   const alias = profile?.alias ?? ''
-  const level = recommendation?.level ?? 'low'
+  const level = todayDecision.recommendationLevel ?? 'low'
 
   if (isLoading) {
     return (
@@ -246,8 +244,17 @@ export default function HomeScreen() {
           </AppText>
         </View>
 
-        {/* Safety streak */}
-        <StreakCard streak={gamification.safetyStreak} />
+        {/* Today Decision — primary card */}
+        {todayDecision.recommendationLevel !== null ? (
+          <RecommendationCard
+            title={todayDecision.title}
+            message={todayDecision.explanation}
+            level={todayDecision.recommendationLevel}
+            reasons={todayDecision.reasons}
+            ctaLabel={todayDecision.bestNextAction}
+            onCtaPress={handleRegister}
+          />
+        ) : null}
 
         {/* Live UV */}
         {uvForecast !== null ? <UvIndexCard forecast={uvForecast} /> : null}
@@ -268,20 +275,11 @@ export default function HomeScreen() {
           <BurnTimeCard skinType={skinType} uvIndex={uvForecast.current.uvIndex} />
         ) : null}
 
-        {/* Recommendation */}
-        {recommendation !== null ? (
-          <RecommendationCard
-            title={recommendation.title}
-            message={recommendation.message}
-            level={recommendation.level}
-            reasons={recommendation.reasons}
-            ctaLabel={recommendation.ctaLabel}
-            onCtaPress={handleRegister}
-          />
-        ) : null}
+        {/* Safety streak */}
+        <StreakCard streak={todayDecision.safetyStreak} />
 
         {/* Tanning plan */}
-        <TanPlanCard plan={tanPlan} onPress={() => router.push('/(app)/plan')} />
+        <TanPlanCard plan={todayDecision.tanPlan} onPress={() => router.push('/(app)/plan')} />
 
         {/* Achievements */}
         <AchievementsCard
@@ -299,12 +297,12 @@ export default function HomeScreen() {
         ) : null}
 
         {/* Weekly summary */}
-        {recommendation !== null ? (
+        {todayDecision.recommendationLevel !== null ? (
           <WeeklySummaryCard
             sessionsCount={weeklySessionsCount}
             totalMinutes={weeklyTotalMinutes}
             lastSensationLabel={lastSensationLabel}
-            recommendationLevel={recommendation.level}
+            recommendationLevel={todayDecision.recommendationLevel}
           />
         ) : null}
 
