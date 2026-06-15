@@ -341,3 +341,92 @@ describe('buildTodayDecision — unavailable state', () => {
     expect(result.todayMinutes).toBe(0)
   })
 })
+
+// ── RC-2D: Recovery status integration ────────────────────────────────────────
+
+describe('buildTodayDecision — recoveryStatus', () => {
+  it('recoveryStatus is none when no bad sensations', () => {
+    const result = buildTodayDecision(makeInput({}))
+    expect(result.recoveryStatus.level).toBe('none')
+    expect(result.recoveryStatus.triggeredBy).toBeNull()
+  })
+
+  it('recoveryStatus is avoid_direct_exposure when burned recently', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        recentSessions: [makeSession({ sensationAfter: 'burned', sessionDate: YESTERDAY })],
+      })
+    )
+    expect(result.recoveryStatus.level).toBe('avoid_direct_exposure')
+    expect(result.recoveryStatus.triggeredBy).toBe('burned')
+    expect(result.recoveryStatus.daysSince).toBe(1)
+  })
+
+  it('recoveryStatus is recovery_recommended when slightly_red yesterday', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        recentSessions: [makeSession({ sensationAfter: 'slightly_red', sessionDate: YESTERDAY })],
+      })
+    )
+    expect(result.recoveryStatus.level).toBe('recovery_recommended')
+  })
+
+  it('recoveryStatus is caution when warm_tight today', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        recentSessions: [makeSession({ sensationAfter: 'warm_tight', sessionDate: TODAY })],
+      })
+    )
+    expect(result.recoveryStatus.level).toBe('caution')
+  })
+
+  it('unavailable state has recoveryStatus level none', () => {
+    const result = buildTodayDecision(makeInput({ profile: null }))
+    expect(result.recoveryStatus.level).toBe('none')
+  })
+})
+
+// ── RC-2D: Plan paused during recovery ────────────────────────────────────────
+
+describe('buildTodayDecision — plan paused during recovery', () => {
+  it('tanPlan is paused_recovery when burned and plan goal is set', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        planGoal: 'bronze',
+        recentSessions: [makeSession({ sensationAfter: 'burned', sessionDate: TODAY })],
+      })
+    )
+    expect(result.tanPlan?.status).toBe('paused_recovery')
+    expect(result.tanPlan?.etaDate).toBeNull()
+  })
+
+  it('tanPlan is paused_recovery when slightly_red in last 2 days', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        planGoal: 'golden',
+        recentSessions: [makeSession({ sensationAfter: 'slightly_red', sessionDate: YESTERDAY })],
+      })
+    )
+    expect(result.tanPlan?.status).toBe('paused_recovery')
+  })
+
+  it('tanPlan is NOT paused for warm_tight (caution only, not overexposure)', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        planGoal: 'golden',
+        recentSessions: [makeSession({ sensationAfter: 'warm_tight', sessionDate: TODAY })],
+      })
+    )
+    expect(result.tanPlan?.status).not.toBe('paused_recovery')
+  })
+
+  it('tanPlan is null when no plan goal, regardless of recovery', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        planGoal: null,
+        recentSessions: [makeSession({ sensationAfter: 'burned', sessionDate: TODAY })],
+      })
+    )
+    expect(result.tanPlan).toBeNull()
+  })
+})

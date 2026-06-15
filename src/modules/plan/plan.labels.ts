@@ -22,6 +22,8 @@ export const PLAN_STATUS_MESSAGES: Record<TanPlanStatus, string> = {
   goal_below_current: 'Tu objetivo ya está por debajo de tu tono actual. Elige uno más intenso.',
   goal_exceeds_safe_ceiling:
     'Tu objetivo supera el techo estimado para tu fototipo. Te sugerimos el objetivo más ambicioso que el modelo estima como alcanzable para ti.',
+  paused_recovery:
+    'Tu plan está en pausa mientras tu piel se recupera. Retoma las sesiones cuando te encuentres bien. No es consejo médico.',
 }
 
 /** "el 12 de julio de 2026" from an ISO date. */

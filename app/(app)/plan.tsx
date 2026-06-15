@@ -81,7 +81,9 @@ export default function PlanScreen() {
               </AppText>
             ) : null}
 
-            {plan.etaDate !== null && plan.status !== 'goal_below_current' ? (
+            {plan.etaDate !== null &&
+            plan.status !== 'goal_below_current' &&
+            plan.status !== 'paused_recovery' ? (
               <>
                 <AppText variant="title" color="brand" style={styles.eta}>
                   {formatEtaDate(plan.etaDate)}

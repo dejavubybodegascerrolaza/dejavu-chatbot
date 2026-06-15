@@ -5,6 +5,7 @@ import type { Profile } from '../profile/profile.types'
 import type { ExposureSession } from '../sessions/session.types'
 import type { UvForecast } from '../uv/uv.types'
 import type { LocationStatus } from '../location/location.store'
+import type { RecoveryStatus } from '../recovery/recovery.types'
 
 /**
  * Driving state for the primary Home decision card.
@@ -46,6 +47,8 @@ export type TodayDecision = {
   safetyStreak: number
   hasLocationPermission: boolean
   todayMinutes: number
+  /** Current skin recovery status derived from recent post-session sensations. */
+  recoveryStatus: RecoveryStatus
 }
 
 export type TodayDecisionInput = {

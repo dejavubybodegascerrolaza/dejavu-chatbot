@@ -4,8 +4,10 @@ import { classifyUv } from '../uv/uv.rules'
 import { calculateBurnTime } from '../sun/sun.burn-time'
 import { generateTanPlan } from '../plan/plan.engine'
 import { calculateSafetyStreak } from '../gamification/gamification.engine'
+import { buildRecoveryStatus } from '../recovery/recovery.engine'
 import type { RecommendationLevel } from '../recommendations/recommendation.types'
 import type { LocationStatus } from '../location/location.store'
+import type { RecoveryStatus } from '../recovery/recovery.types'
 import type { TodayDecision, TodayDecisionInput, TodayDecisionState } from './today.types'
 
 // ── State derivation ──────────────────────────────────────────────────────────
@@ -31,6 +33,13 @@ function deriveState(
 
 // ── Sentinels ─────────────────────────────────────────────────────────────────
 
+const NULL_RECOVERY: RecoveryStatus = {
+  level: 'none',
+  triggeredBy: null,
+  daysSince: null,
+  message: '',
+}
+
 const UNAVAILABLE: TodayDecision = {
   state: 'unavailable',
   title: 'Cargando tu información',
@@ -49,6 +58,7 @@ const UNAVAILABLE: TodayDecision = {
   safetyStreak: 0,
   hasLocationPermission: false,
   todayMinutes: 0,
+  recoveryStatus: NULL_RECOVERY,
 }
 
 // ── Location-needed copy ──────────────────────────────────────────────────────
@@ -113,18 +123,25 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
       ? calculateBurnTime({ skinType: profile.skinType, uvIndex: uvIndexNow, spf: 30 })
       : null
 
-  // 5. Tan plan (only when the user has set a goal)
+  // 5. Recovery status from recent skin response
+  const recoveryStatus = buildRecoveryStatus({ recentSessions, today })
+  const hasRecentOverexposure =
+    recoveryStatus.level === 'recovery_recommended' ||
+    recoveryStatus.level === 'avoid_direct_exposure'
+
+  // 6. Tan plan (only when the user has set a goal)
   const tanPlan =
     planGoal !== null
       ? generateTanPlan({
           skinType: profile.skinType,
           currentLevel: planCurrentLevel,
           goalLevel: planGoal,
+          hasRecentOverexposure,
           ...(uvForecast !== null ? { typicalUvIndex: uvForecast.maxToday } : {}),
         })
       : null
 
-  // 6. Safety streak from all-time history
+  // 7. Safety streak from all-time history
   const safetyStreak = calculateSafetyStreak(
     historySessions.map((s) => ({
       sessionDate: s.sessionDate,
@@ -134,10 +151,10 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     today
   )
 
-  // 7. Today's total recorded exposure
+  // 8. Today's total recorded exposure
   const todayMinutes = todaySessions.reduce((sum, s) => sum + s.durationMinutes, 0)
 
-  // 8. Copy — location_needed overrides the recommendation title and explanation
+  // 9. Copy — location_needed overrides the recommendation title and explanation
   //    so the user knows the decision is less accurate without UV data.
   const title = state === 'location_needed' ? LOCATION_COPY.title : recommendation.title
   const explanation =
@@ -161,5 +178,6 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     safetyStreak,
     hasLocationPermission: locationStatus === 'ready',
     todayMinutes,
+    recoveryStatus,
   }
 }

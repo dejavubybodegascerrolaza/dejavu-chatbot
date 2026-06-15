@@ -30,6 +30,7 @@ export function TanPlanCard({ plan, onPress }: Props) {
   }
 
   const goalReached = plan.status === 'goal_below_current'
+  const isPaused = plan.status === 'paused_recovery'
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ver mi plan">
@@ -44,12 +45,16 @@ export function TanPlanCard({ plan, onPress }: Props) {
         </View>
 
         <AppText variant="heading" style={styles.goal}>
-          Meta: {TAN_LEVEL_LABELS[plan.reachableLevel]}
+          Meta: {TAN_LEVEL_LABELS[plan.goalLevel]}
         </AppText>
 
         {goalReached ? (
           <AppText variant="body" color="textSecondary">
             Ya has alcanzado este tono. ¡Elige una meta más intensa para seguir!
+          </AppText>
+        ) : isPaused ? (
+          <AppText variant="caption" color="textSecondary" style={styles.pausedNote}>
+            Plan pausado mientras tu piel se recupera. Retoma cuando te encuentres bien.
           </AppText>
         ) : (
           <>
@@ -71,7 +76,7 @@ export function TanPlanCard({ plan, onPress }: Props) {
             </View>
             <View style={styles.row}>
               <AppText variant="caption" color="textSecondary">
-                Dosis diaria segura
+                Tiempo diario estimado
               </AppText>
               <AppText variant="caption" color="textPrimary">
                 {formatMinutes(plan.dailySafeMinutes)}
@@ -88,6 +93,10 @@ const styles = StyleSheet.create({
   subtext: {
     marginTop: spacing.xs,
     lineHeight: 18,
+  },
+  pausedNote: {
+    lineHeight: 18,
+    marginTop: spacing.xs,
   },
   header: {
     flexDirection: 'row',

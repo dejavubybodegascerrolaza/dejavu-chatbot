@@ -37,6 +37,20 @@ export function generateTanPlan(input: TanPlanInput): TanPlanResult {
     uvIndex: typicalUv,
   }).safeMinutes
 
+  // Skin is in recovery: pause the plan until the user feels better.
+  if (input.hasRecentOverexposure === true) {
+    return {
+      status: 'paused_recovery',
+      goalLevel,
+      reachableLevel: currentLevel,
+      etaDate: null,
+      totalDays: 0,
+      sessionDays: 0,
+      dailySafeMinutes,
+      milestones: [],
+    }
+  }
+
   // Goal at or below the current tan: nothing to do.
   if (tanLevelIndex(goalLevel) <= tanLevelIndex(currentLevel)) {
     return {

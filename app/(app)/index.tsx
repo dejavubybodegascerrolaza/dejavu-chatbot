@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
 import {
   AchievementsCard,
   BurnTimeCard,
+  RecoveryGuidanceCard,
   RecommendationCard,
   SessionCard,
   StreakCard,
@@ -254,6 +255,11 @@ export default function HomeScreen() {
             ctaLabel={todayDecision.bestNextAction}
             onCtaPress={handleRegister}
           />
+        ) : null}
+
+        {/* Recovery guidance — shown when skin response signals overexposure */}
+        {todayDecision.recoveryStatus.level !== 'none' ? (
+          <RecoveryGuidanceCard recovery={todayDecision.recoveryStatus} />
         ) : null}
 
         {/* Live UV */}

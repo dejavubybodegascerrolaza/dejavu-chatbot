@@ -3,7 +3,11 @@ import type { SkinType } from '../profile/profile.types'
 /** Named, user-facing tan shades, ordered from lightest to deepest. */
 export type TanLevel = 'natural' | 'light_golden' | 'golden' | 'bronze' | 'deep_bronze'
 
-export type TanPlanStatus = 'ok' | 'goal_below_current' | 'goal_exceeds_safe_ceiling'
+export type TanPlanStatus =
+  | 'ok'
+  | 'goal_below_current'
+  | 'goal_exceeds_safe_ceiling'
+  | 'paused_recovery'
 
 /** The persisted tanning plan (the user's choices saved to Supabase). */
 export type TanningPlan = {
@@ -42,6 +46,8 @@ export type TanPlanInput = {
   sessionsPerWeek?: number
   /** Representative UV index used to size the daily safe dose. Defaults to 7. */
   typicalUvIndex?: number
+  /** When true, the plan is paused while the skin recovers from overexposure. */
+  hasRecentOverexposure?: boolean
 }
 
 export type TanPlanResult = {
