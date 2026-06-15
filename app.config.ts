@@ -8,6 +8,7 @@ const config: ExpoConfig = {
   name: 'Bronze IQ',
   slug: 'bronze-iq',
   version: '0.1.0',
+  // scheme is used for deep links (e.g. OAuth callbacks). Must be unique.
   scheme: 'bronzeiq',
   platforms: ['ios', 'android'],
   orientation: 'portrait',
@@ -16,6 +17,12 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     bundleIdentifier: BUNDLE_ID,
+    // infoPlist entries for permission usage descriptions (required by App Store review)
+    infoPlist: {
+      NSLocationWhenInUseUsageDescription:
+        'Bronze IQ usa tu ubicación para mostrarte el índice UV real de tu zona.',
+      NSCameraUsageDescription: 'Bronze IQ no usa la cámara. Este permiso no está activo.',
+    },
   },
   android: {
     package: BUNDLE_ID,
@@ -24,11 +31,15 @@ const config: ExpoConfig = {
       monochromeImage: './assets/android-icon-monochrome.png',
       backgroundColor: '#FAF5EE',
     },
+    permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
   },
   experiments: {
     typedRoutes: true,
   },
   plugins: [
+    // expo-dev-client must be listed first so the native dev launcher is built
+    // correctly when running `eas build --profile development`.
+    'expo-dev-client',
     'expo-router',
     'expo-secure-store',
     'expo-font',
@@ -56,8 +67,12 @@ const config: ExpoConfig = {
       },
     ],
   ],
-  // extra.eas.projectId is populated automatically by `eas build:configure`
-  // after linking the project to an Expo account. Do not set manually.
+  // extra.eas.projectId is set automatically by `eas build:configure`
+  // after linking to an Expo account. Do NOT set this manually.
+  // Uncomment and fill in only after running `eas build:configure`:
+  // extra: {
+  //   eas: { projectId: 'your-project-id-here' },
+  // },
 }
 
 export default config
