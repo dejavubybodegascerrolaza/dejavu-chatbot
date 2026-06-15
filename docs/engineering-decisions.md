@@ -648,3 +648,15 @@ npx supabase gen types typescript --local > src/types/database.types.ts
 **Decisión:** El plan es una función pura determinista de (perfil, objetivo, tono actual, fecha, UV típico). El store `plan.store.ts` guarda solo las elecciones del usuario (objetivo y tono actual) en memoria; el `TanPlanResult` se deriva con `useMemo` en Home y en la pantalla del plan.
 
 **Razón:** Mantener el motor puro lo hace 100% testeable offline y reproducible, y evita guardar datos derivados que se desincronizan. La persistencia en Supabase y el seguimiento de adherencia (sesiones completadas vs planificadas) son un paso siguiente natural, no un requisito para entregar el valor del ETA y los hitos.
+
+### Gamificación: la racha premia no quemarse, no exponerse — CERRADO
+
+**Decisión:** La métrica central de gamificación (`src/modules/gamification`) es la "racha de seguridad": días consecutivos sin señal de quemadura (`burned`/`slightly_red`), donde los días de descanso cuentan como sanos. Los logros premian constancia, diversidad de contextos y la creación del plan. Ninguna mecánica recompensa más exposición ni dosis de UV más altas.
+
+**Razón:** La _loss aversion_ de las rachas es el mecanismo de retención más potente, pero aplicarla a "días de exposición" empujaría a la gente a tomar el sol aunque no debiera —peligroso y motivo de rechazo en App Store—. Anclar la racha en "días cuidando tu piel" convierte el mismo mecanismo adictivo en un incentivo de salud, coherente con el principio del plan (optimizar el máximo seguro, no la dosis).
+
+### Gamificación derivada del historial, motor puro — CERRADO
+
+**Decisión:** El motor de gamificación es una función pura del historial de sesiones + estado del plan. Home carga el historial completo (`loadHistorySessions`) para calcular racha y logros reales; la pantalla de logros reutiliza ese mismo `historySessions` del store. No se persiste estado de gamificación derivado.
+
+**Razón:** Mantener el cálculo puro lo hace 100% testeable y consistente entre Home y la pantalla de logros (una sola fuente de verdad). La recomendación sigue usando su ventana de 7 días; la gamificación necesita más historia, de ahí la carga completa. Persistir logros desbloqueados y celebraciones es un paso siguiente, no un requisito para entregar el valor de la racha.

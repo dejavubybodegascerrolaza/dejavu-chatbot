@@ -5,9 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button, Card } from '@/components/ui'
 import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
 import {
+  AchievementsCard,
   BurnTimeCard,
   RecommendationCard,
   SessionCard,
+  StreakCard,
   TanPlanCard,
   UvIndexCard,
   VitaminDCard,
@@ -24,6 +26,7 @@ import { LEVEL_SUBTEXTS } from '@/modules/recommendations/recommendation.labels'
 import { useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
 import { generateTanPlan, usePlanStore } from '@/modules/plan'
+import { buildGamificationSummary } from '@/modules/gamification'
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10)
@@ -42,9 +45,11 @@ export default function HomeScreen() {
     recentSessions,
     recentSessionsStatus,
     recentSessionsError,
+    historySessions,
     error: todayError,
     loadTodaySessions,
     loadRecentSessions,
+    loadHistorySessions,
     clearSessions,
   } = useSessionStore()
 
@@ -66,10 +71,11 @@ export default function HomeScreen() {
     const today = getTodayString()
     void loadTodaySessions(userId, today)
     void loadRecentSessions(userId, 7)
+    void loadHistorySessions(userId)
     return () => {
       clearSessions()
     }
-  }, [userId, loadTodaySessions, loadRecentSessions, clearSessions])
+  }, [userId, loadTodaySessions, loadRecentSessions, loadHistorySessions, clearSessions])
 
   useEffect(() => {
     let cancelled = false
@@ -111,6 +117,20 @@ export default function HomeScreen() {
       ...(maxUvToday !== null ? { typicalUvIndex: maxUvToday } : {}),
     })
   }, [planGoal, planCurrentLevel, profile?.skinType, maxUvToday])
+
+  const gamification = useMemo(
+    () =>
+      buildGamificationSummary({
+        sessions: historySessions.map((s) => ({
+          sessionDate: s.sessionDate,
+          sensationAfter: s.sensationAfter,
+          context: s.context,
+        })),
+        today: getTodayString(),
+        hasPlan: planGoal !== null,
+      }),
+    [historySessions, planGoal]
+  )
 
   const isLoading =
     profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'
@@ -196,6 +216,9 @@ export default function HomeScreen() {
           </AppText>
         </View>
 
+        {/* Safety streak */}
+        <StreakCard streak={gamification.safetyStreak} />
+
         {/* Live UV */}
         {uvForecast !== null ? <UvIndexCard forecast={uvForecast} /> : null}
 
@@ -229,6 +252,12 @@ export default function HomeScreen() {
 
         {/* Tanning plan */}
         <TanPlanCard plan={tanPlan} onPress={() => router.push('/(app)/plan')} />
+
+        {/* Achievements */}
+        <AchievementsCard
+          summary={gamification}
+          onPress={() => router.push('/(app)/achievements')}
+        />
 
         {/* Vitamin D from today's exposure */}
         {uvForecast !== null && todayMinutes > 0 ? (

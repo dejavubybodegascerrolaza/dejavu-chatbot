@@ -18,6 +18,10 @@ export default function AppLayout() {
         options={{ headerShown: true, title: 'Mi plan', headerStyle, headerTintColor }}
       />
       <Stack.Screen
+        name="achievements"
+        options={{ headerShown: true, title: 'Logros', headerStyle, headerTintColor }}
+      />
+      <Stack.Screen
         name="settings"
         options={{ headerShown: true, title: 'Ajustes', headerStyle, headerTintColor }}
       />

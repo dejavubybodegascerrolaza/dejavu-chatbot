@@ -16,3 +16,10 @@ export function addDaysToISODate(isoDate: string, days: number): string {
   base.setUTCDate(base.getUTCDate() + days)
   return base.toISOString().slice(0, 10)
 }
+
+/** Whole days from `from` to `to` (positive when `to` is later). */
+export function daysBetweenISODates(from: string, to: string): number {
+  const a = new Date(`${from.slice(0, 10)}T00:00:00.000Z`).getTime()
+  const b = new Date(`${to.slice(0, 10)}T00:00:00.000Z`).getTime()
+  return Math.round((b - a) / 86_400_000)
+}
