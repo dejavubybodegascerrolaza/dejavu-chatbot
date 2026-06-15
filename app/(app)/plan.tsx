@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button, Card } from '@/components/ui'
 import { ProfileOptionCard } from '@/components/product'
 import { colors, spacing } from '@/design'
-import { formatDisplayDate } from '@/utils/date'
+import { formatDisplayDate, getTodayISODate } from '@/utils/date'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { useUvStore } from '@/modules/uv'
 import {
@@ -20,6 +20,9 @@ import {
 } from '@/modules/plan'
 import type { TanLevel } from '@/modules/plan'
 import { formatMinutes } from '@/modules/sun'
+import { useSessionStore } from '@/modules/sessions/session.store'
+import { buildRecoveryStatus } from '@/modules/recovery'
+import { buildPlanAdherence } from '@/modules/adherence'
 
 const SELECTABLE_GOALS: TanLevel[] = TAN_LEVEL_ORDER.filter((l) => l !== 'natural')
 
@@ -29,19 +32,42 @@ export default function PlanScreen() {
 
   const goalLevel = usePlanStore((s) => s.goalLevel)
   const currentLevel = usePlanStore((s) => s.currentLevel)
+  const startDate = usePlanStore((s) => s.startDate)
   const setGoal = usePlanStore((s) => s.setGoal)
 
   const currentUv = useUvStore((s) => s.forecast?.maxToday ?? null)
 
+  const historySessions = useSessionStore((s) => s.historySessions)
+  const recentSessions = useSessionStore((s) => s.recentSessions)
+
+  const today = getTodayISODate()
+
   const plan = useMemo(() => {
     if (goalLevel === null) return null
+    const recoveryStatus = buildRecoveryStatus({ recentSessions, today })
+    const hasRecentOverexposure =
+      recoveryStatus.level === 'recovery_recommended' ||
+      recoveryStatus.level === 'avoid_direct_exposure'
     return generateTanPlan({
       skinType,
       currentLevel,
       goalLevel,
+      hasRecentOverexposure,
       ...(currentUv !== null ? { typicalUvIndex: currentUv } : {}),
     })
-  }, [skinType, currentLevel, goalLevel, currentUv])
+  }, [skinType, currentLevel, goalLevel, currentUv, recentSessions, today])
+
+  const adherence = useMemo(() => {
+    if (plan === null || startDate === null) return null
+    const recoveryStatus = buildRecoveryStatus({ recentSessions, today })
+    return buildPlanAdherence({
+      plan,
+      planStartDate: startDate,
+      historySessions,
+      recoveryStatus,
+      today,
+    })
+  }, [plan, startDate, historySessions, recentSessions, today])
 
   return (
     <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
@@ -85,12 +111,19 @@ export default function PlanScreen() {
             plan.status !== 'goal_below_current' &&
             plan.status !== 'paused_recovery' ? (
               <>
+                <AppText variant="label" color="textMuted" style={styles.etaLabel}>
+                  {adherence?.status === 'slightly_behind' && adherence.adjustedEtaDate !== null
+                    ? 'ETA ajustada (orientativa)'
+                    : 'ETA orientativa'}
+                </AppText>
                 <AppText variant="title" color="brand" style={styles.eta}>
-                  {formatEtaDate(plan.etaDate)}
+                  {adherence?.status === 'slightly_behind' && adherence.adjustedEtaDate !== null
+                    ? formatEtaDate(adherence.adjustedEtaDate)
+                    : formatEtaDate(plan.etaDate)}
                 </AppText>
                 <AppText variant="caption" color="textMuted">
                   Llegas a {TAN_LEVEL_LABELS[plan.reachableLevel]} en{' '}
-                  {formatPlanDuration(plan.totalDays)} ({plan.sessionDays} sesiones)
+                  {formatPlanDuration(plan.totalDays)} ({plan.sessionDays} sesiones estimadas)
                 </AppText>
 
                 <View style={styles.metaRow}>
@@ -117,6 +150,13 @@ export default function PlanScreen() {
                       </View>
                     ))}
                   </View>
+                ) : null}
+
+                {/* Adherence summary */}
+                {adherence != null && adherence.status !== 'unknown' && adherence.summary !== '' ? (
+                  <AppText variant="caption" color="textMuted" style={styles.adherenceSummary}>
+                    {adherence.summary}
+                  </AppText>
                 ) : null}
               </>
             ) : null}
@@ -171,8 +211,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     lineHeight: 18,
   },
+  etaLabel: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
   eta: {
     marginTop: spacing.xs,
+  },
+  adherenceSummary: {
+    marginTop: spacing.md,
+    lineHeight: 18,
   },
   metaRow: {
     flexDirection: 'row',

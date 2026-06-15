@@ -69,6 +69,7 @@ function makeInput(overrides: Partial<TodayDecisionInput> = {}): TodayDecisionIn
     locationStatus: 'ready',
     planGoal: null,
     planCurrentLevel: 'natural',
+    planStartDate: null,
     today: TODAY,
     now: NOW,
     ...overrides,
@@ -428,5 +429,80 @@ describe('buildTodayDecision — plan paused during recovery', () => {
       })
     )
     expect(result.tanPlan).toBeNull()
+  })
+})
+
+// ── RC-2E: Plan adherence integration ─────────────────────────────────────────
+
+describe('buildTodayDecision — planAdherence', () => {
+  const START_DATE = '2026-06-08' // 7 days before TODAY
+
+  it('planAdherence is null when no plan goal', () => {
+    const result = buildTodayDecision(makeInput({ planGoal: null, planStartDate: null }))
+    expect(result.planAdherence).toBeNull()
+  })
+
+  it('planAdherence is null when plan goal set but no startDate', () => {
+    const result = buildTodayDecision(
+      makeInput({ planGoal: 'bronze', planCurrentLevel: 'natural', planStartDate: null })
+    )
+    expect(result.planAdherence).toBeNull()
+  })
+
+  it('planAdherence is insufficient_data when plan just started and no history', () => {
+    const result = buildTodayDecision(
+      makeInput({ planGoal: 'golden', planStartDate: TODAY, historySessions: [] })
+    )
+    expect(result.planAdherence?.status).toBe('insufficient_data')
+  })
+
+  it('planAdherence is on_track when sessions meet expected cadence', () => {
+    const sessions = [
+      makeSession({ sessionDate: '2026-06-08', sensationAfter: 'normal', id: 's1' }),
+      makeSession({ sessionDate: '2026-06-09', sensationAfter: 'normal', id: 's2' }),
+      makeSession({ sessionDate: '2026-06-10', sensationAfter: 'great', id: 's3' }),
+      makeSession({ sessionDate: '2026-06-11', sensationAfter: 'normal', id: 's4' }),
+      makeSession({ sessionDate: '2026-06-12', sensationAfter: 'warm_tight', id: 's5' }),
+    ]
+    const result = buildTodayDecision(
+      makeInput({ planGoal: 'golden', planStartDate: START_DATE, historySessions: sessions })
+    )
+    expect(result.planAdherence?.status).toBe('on_track')
+    expect(result.planAdherence?.sessionDeficit).toBe(0)
+  })
+
+  it('planAdherence is slightly_behind with fewer sessions than expected', () => {
+    const sessions = [
+      makeSession({ sessionDate: '2026-06-08', sensationAfter: 'normal', id: 's1' }),
+      makeSession({ sessionDate: '2026-06-09', sensationAfter: 'normal', id: 's2' }),
+    ]
+    const result = buildTodayDecision(
+      makeInput({ planGoal: 'golden', planStartDate: START_DATE, historySessions: sessions })
+    )
+    // expected 5, completed 2 → deficit 3
+    expect(result.planAdherence?.status).toBe('slightly_behind')
+    expect(result.planAdherence?.sessionDeficit).toBeGreaterThan(0)
+  })
+
+  it('planAdherence is paused_recovery when burned recently', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        planGoal: 'bronze',
+        planStartDate: START_DATE,
+        recentSessions: [makeSession({ sensationAfter: 'burned', sessionDate: YESTERDAY })],
+      })
+    )
+    expect(result.planAdherence?.status).toBe('paused_recovery')
+    expect(result.planAdherence?.adjustedEtaDate).toBeNull()
+  })
+
+  it('planAdherence.adjustedEtaDate is null when null plan startDate with no sessions', () => {
+    const result = buildTodayDecision(makeInput({ planGoal: 'golden', planStartDate: TODAY }))
+    expect(result.planAdherence?.adjustedEtaDate).toBeNull()
+  })
+
+  it('unavailable state has planAdherence null', () => {
+    const result = buildTodayDecision(makeInput({ profile: null }))
+    expect(result.planAdherence).toBeNull()
   })
 })

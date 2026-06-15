@@ -5,24 +5,35 @@ import { colors, spacing } from '@/design'
 import { formatEtaDate, formatPlanDuration, TAN_LEVEL_LABELS } from '@/modules/plan'
 import type { TanPlanResult } from '@/modules/plan'
 import { formatMinutes } from '@/modules/sun'
+import type { PlanAdherence } from '@/modules/adherence'
 
 type Props = {
   plan: TanPlanResult | null
   onPress: () => void
+  adherence?: PlanAdherence | null
+}
+
+const ADHERENCE_LABELS: Record<string, string> = {
+  on_track: 'En ritmo estimado',
+  slightly_behind: 'Algo por detrás del ritmo',
+  insufficient_data: 'Estimando ritmo…',
+  paused_recovery: 'Plan pausado',
 }
 
 /**
- * Home entry point for the tanning plan. Shows the goal, ETA and safe daily
- * dose when a plan exists, or an invitation to create one.
+ * Home entry point for the tanning plan. Shows the goal, ETA and estimated
+ * cadence when a plan exists, or an invitation to create one.
+ *
+ * ETA is always framed as an estimate, never as a guaranteed date.
  */
-export function TanPlanCard({ plan, onPress }: Props) {
+export function TanPlanCard({ plan, onPress, adherence }: Props) {
   if (plan === null) {
     return (
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Crear mi plan">
         <Card variant="outlined">
           <AppText variant="bodyStrong">Crea tu plan de bronceado</AppText>
           <AppText variant="caption" color="textSecondary" style={styles.subtext}>
-            Define tu objetivo y calcula el día en que lo alcanzas de forma sana.
+            Define tu objetivo y Bronze IQ estimará el ritmo orientativo para lograrlo.
           </AppText>
         </Card>
       </Pressable>
@@ -31,6 +42,22 @@ export function TanPlanCard({ plan, onPress }: Props) {
 
   const goalReached = plan.status === 'goal_below_current'
   const isPaused = plan.status === 'paused_recovery'
+
+  // When slightly_behind: show adjusted ETA. Otherwise show original.
+  const displayEta =
+    adherence?.status === 'slightly_behind' && adherence.adjustedEtaDate !== null
+      ? adherence.adjustedEtaDate
+      : plan.etaDate
+
+  const etaLabel =
+    adherence?.status === 'slightly_behind' && adherence.adjustedEtaDate !== null
+      ? 'ETA ajustada (orientativa):'
+      : 'ETA orientativa:'
+
+  const adherenceLabel =
+    adherence != null && adherence.status !== 'unknown'
+      ? (ADHERENCE_LABELS[adherence.status] ?? null)
+      : null
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ver mi plan">
@@ -60,10 +87,10 @@ export function TanPlanCard({ plan, onPress }: Props) {
           <>
             <View style={styles.row}>
               <AppText variant="caption" color="textSecondary">
-                Lo alcanzas el
+                {etaLabel}
               </AppText>
               <AppText variant="bodyStrong" color="brand">
-                {formatEtaDate(plan.etaDate)}
+                {formatEtaDate(displayEta)}
               </AppText>
             </View>
             <View style={styles.row}>
@@ -84,6 +111,13 @@ export function TanPlanCard({ plan, onPress }: Props) {
             </View>
           </>
         )}
+
+        {/* Adherence status line — shows only when meaningful */}
+        {adherenceLabel !== null ? (
+          <AppText variant="caption" color="textMuted" style={styles.adherenceStatus}>
+            {adherenceLabel}
+          </AppText>
+        ) : null}
       </Card>
     </Pressable>
   )
@@ -114,5 +148,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+  },
+  adherenceStatus: {
+    marginTop: spacing.sm,
+    lineHeight: 18,
   },
 })

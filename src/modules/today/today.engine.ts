@@ -5,6 +5,7 @@ import { calculateBurnTime } from '../sun/sun.burn-time'
 import { generateTanPlan } from '../plan/plan.engine'
 import { calculateSafetyStreak } from '../gamification/gamification.engine'
 import { buildRecoveryStatus } from '../recovery/recovery.engine'
+import { buildPlanAdherence } from '../adherence/adherence.engine'
 import type { RecommendationLevel } from '../recommendations/recommendation.types'
 import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
@@ -59,6 +60,7 @@ const UNAVAILABLE: TodayDecision = {
   hasLocationPermission: false,
   todayMinutes: 0,
   recoveryStatus: NULL_RECOVERY,
+  planAdherence: null,
 }
 
 // ── Location-needed copy ──────────────────────────────────────────────────────
@@ -87,6 +89,7 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     locationStatus,
     planGoal,
     planCurrentLevel,
+    planStartDate,
     today,
     now = new Date(),
   } = input
@@ -154,7 +157,19 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
   // 8. Today's total recorded exposure
   const todayMinutes = todaySessions.reduce((sum, s) => sum + s.durationMinutes, 0)
 
-  // 9. Copy — location_needed overrides the recommendation title and explanation
+  // 9. Plan adherence — compare actual session history to the plan's cadence
+  const planAdherence =
+    tanPlan !== null && planStartDate !== null
+      ? buildPlanAdherence({
+          plan: tanPlan,
+          planStartDate,
+          historySessions,
+          recoveryStatus,
+          today,
+        })
+      : null
+
+  // 10. Copy — location_needed overrides the recommendation title and explanation
   //    so the user knows the decision is less accurate without UV data.
   const title = state === 'location_needed' ? LOCATION_COPY.title : recommendation.title
   const explanation =
@@ -179,5 +194,6 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     hasLocationPermission: locationStatus === 'ready',
     todayMinutes,
     recoveryStatus,
+    planAdherence,
   }
 }

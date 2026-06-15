@@ -65,6 +65,7 @@ export default function HomeScreen() {
 
   const planGoal = usePlanStore((s) => s.goalLevel)
   const planCurrentLevel = usePlanStore((s) => s.currentLevel)
+  const planStartDate = usePlanStore((s) => s.startDate)
   const loadPlan = usePlanStore((s) => s.loadPlan)
   const resetPlan = usePlanStore((s) => s.reset)
 
@@ -124,6 +125,7 @@ export default function HomeScreen() {
         locationStatus,
         planGoal,
         planCurrentLevel,
+        planStartDate,
         today: getTodayString(),
       }),
     [
@@ -135,6 +137,7 @@ export default function HomeScreen() {
       locationStatus,
       planGoal,
       planCurrentLevel,
+      planStartDate,
     ]
   )
 
@@ -285,7 +288,11 @@ export default function HomeScreen() {
         <StreakCard streak={todayDecision.safetyStreak} />
 
         {/* Tanning plan */}
-        <TanPlanCard plan={todayDecision.tanPlan} onPress={() => router.push('/(app)/plan')} />
+        <TanPlanCard
+          plan={todayDecision.tanPlan}
+          adherence={todayDecision.planAdherence}
+          onPress={() => router.push('/(app)/plan')}
+        />
 
         {/* Achievements */}
         <AchievementsCard

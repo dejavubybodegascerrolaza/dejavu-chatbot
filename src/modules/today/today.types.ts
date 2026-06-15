@@ -6,6 +6,7 @@ import type { ExposureSession } from '../sessions/session.types'
 import type { UvForecast } from '../uv/uv.types'
 import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
+import type { PlanAdherence } from '../adherence/adherence.types'
 
 /**
  * Driving state for the primary Home decision card.
@@ -49,6 +50,8 @@ export type TodayDecision = {
   todayMinutes: number
   /** Current skin recovery status derived from recent post-session sensations. */
   recoveryStatus: RecoveryStatus
+  /** Plan adherence derived from actual session history vs. projected cadence. */
+  planAdherence: PlanAdherence | null
 }
 
 export type TodayDecisionInput = {
@@ -63,6 +66,8 @@ export type TodayDecisionInput = {
   locationStatus: LocationStatus
   planGoal: TanLevel | null
   planCurrentLevel: TanLevel
+  /** ISO YYYY-MM-DD when the user's tanning plan started. Null when no plan. */
+  planStartDate: string | null
   /** ISO YYYY-MM-DD, anchor for streak and "today" logic. */
   today: string
   now?: Date
