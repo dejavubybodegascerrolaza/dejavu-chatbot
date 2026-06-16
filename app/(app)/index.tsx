@@ -218,8 +218,10 @@ export default function HomeScreen() {
 
   // Post-save acknowledgement, carried from Session Log via a route param.
   // Parsed in a pure helper so invalid/missing values are ignored safely.
-  const savedParam = useLocalSearchParams<{ saved?: string }>().saved
+  const ackParams = useLocalSearchParams<{ saved?: string; savedId?: string }>()
+  const savedParam = ackParams.saved
   const savedKey = typeof savedParam === 'string' ? savedParam : null
+  const savedId = typeof ackParams.savedId === 'string' ? ackParams.savedId : null
   const acknowledgement = useMemo(() => parseSessionSaveAcknowledgement(savedParam), [savedParam])
   const [dismissedAckKey, setDismissedAckKey] = useState<string | null>(null)
   const showAcknowledgement = acknowledgement !== null && savedKey !== dismissedAckKey
@@ -315,6 +317,18 @@ export default function HomeScreen() {
                 <AppText variant="caption" color="textSecondary" style={styles.ackMessage}>
                   {acknowledgement.message}
                 </AppText>
+              ) : null}
+              {savedId !== null ? (
+                <Pressable
+                  onPress={() => router.push(`/(app)/session-detail/${savedId}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver la sesión registrada"
+                  hitSlop={8}
+                >
+                  <AppText variant="caption" color="brand" style={styles.ackLink}>
+                    Ver sesión
+                  </AppText>
+                </Pressable>
               ) : null}
             </View>
             <Pressable
@@ -526,6 +540,10 @@ const styles = StyleSheet.create({
   },
   ackMessage: {
     lineHeight: 18,
+  },
+  ackLink: {
+    marginTop: spacing.xs,
+    fontWeight: '600',
   },
   uvUnavailableText: {
     marginTop: spacing.xs,

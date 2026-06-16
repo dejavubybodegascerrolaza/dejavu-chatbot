@@ -1,19 +1,26 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button } from '@/components/ui'
 import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
-import { SessionCard } from '@/components/product'
+import { HistoryInsightCard, SessionCard } from '@/components/product'
 import { colors, spacing } from '@/design'
 import { useAuthStore } from '@/modules/auth/auth.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
+import { buildHistoryInsights } from '@/modules/history'
+import { getTodayISODate } from '@/utils/date'
 
 export default function HistoryScreen() {
   const user = useAuthStore((s) => s.user)
   const userId = user?.id
 
   const { historySessions, historyStatus, historyError, loadHistorySessions } = useSessionStore()
+
+  const insights = useMemo(
+    () => buildHistoryInsights({ sessions: historySessions, today: getTodayISODate() }),
+    [historySessions]
+  )
 
   useEffect(() => {
     if (!userId) return
@@ -71,20 +78,23 @@ export default function HistoryScreen() {
         ) : historyStatus === 'empty' ? (
           <EmptyState
             title="Aún no hay sesiones registradas."
-            description="Cuando registres tus exposiciones, aparecerán aquí para ayudarte a entender tu ritmo."
+            description="Cuando registres tus exposiciones, aparecerán aquí y Bronze IQ podrá ajustar el margen a tu ritmo."
             ctaLabel="Registrar primera sesión"
             onCta={handleRegister}
           />
         ) : (
-          <View style={styles.list}>
-            {historySessions.map((session) => (
-              <SessionCard
-                key={session.id}
-                session={session}
-                onPress={() => handleSessionPress(session.id)}
-              />
-            ))}
-          </View>
+          <>
+            <HistoryInsightCard insights={insights} />
+            <View style={styles.list}>
+              {historySessions.map((session) => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  onPress={() => handleSessionPress(session.id)}
+                />
+              ))}
+            </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

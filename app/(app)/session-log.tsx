@@ -27,8 +27,12 @@ export default function SessionLogScreen() {
     clearError()
     const session = await createSession(user.id, input)
     if (session !== null) {
-      // Carry the logged skin response so Home can show a calm acknowledgement.
-      router.replace({ pathname: '/(app)', params: { saved: input.sensationAfter } })
+      // Carry the logged skin response (and the saved id) so Home can show a calm
+      // acknowledgement that can link back to the session detail.
+      router.replace({
+        pathname: '/(app)',
+        params: { saved: input.sensationAfter, savedId: session.id },
+      })
     }
   }
 
