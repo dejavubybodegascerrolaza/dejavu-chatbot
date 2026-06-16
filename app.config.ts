@@ -20,6 +20,12 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     bundleIdentifier: BUNDLE_ID,
+    // The app only uses standard, exempt encryption (HTTPS/TLS via Supabase).
+    // Declaring this up front means TestFlight/App Store Connect won't ask the
+    // export-compliance question on every submission.
+    config: {
+      usesNonExemptEncryption: false,
+    },
     // infoPlist entries for permission usage descriptions (required by App Store review).
     // Only declare permissions that are actually requested at runtime.
     infoPlist: {

@@ -144,8 +144,9 @@ eas submit --platform ios --latest
 ## Fase E — Instalar en el iPhone y probar
 
 1. App Store Connect → tu app → pestaña **TestFlight**.
-2. Si pide **información de cumplimiento de exportación (encryption)**: la app no
-   usa criptografía no exenta → responde **No**.
+2. **Export compliance (encryption):** ya está declarado en `app.config.ts`
+   (`ios.config.usesNonExemptEncryption = false`), así que normalmente **no te lo
+   preguntará**. Si por lo que sea aparece, responde **No**.
 3. **Internal Testing** → añade tu Apple ID como tester (los testers internos no
    requieren revisión de Apple; disponibles en minutos).
 4. En el iPhone: instala la app **TestFlight** desde la App Store → acepta la
