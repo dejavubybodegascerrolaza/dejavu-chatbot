@@ -1,6 +1,19 @@
 import { calculateBurnTime } from '../sun/sun.burn-time'
+import { buildProtectionReality, spfToProtectionLevel } from '../protection/protection.engine'
+import { classifyUv } from '../uv/uv.rules'
 import { DEFAULT_FLIP_INTERVAL_MINUTES } from './live.rules'
+import type { ProtectionReality } from '../protection/protection.types'
 import type { LiveSessionInput, LiveSessionState, LiveStatus } from './live.types'
+
+// ── Sentinel ──────────────────────────────────────────────────────────────────
+
+// When UV is zero there is no erythemal risk; protection reality is moot.
+const NO_RISK_PROTECTION: ProtectionReality = {
+  reliability: 'high',
+  explanation: '',
+  suggestedAction: 'continue_conservatively',
+  reapplyWarning: false,
+}
 
 /**
  * Pure state of a live tanning session at a given elapsed time. Drives the
@@ -32,6 +45,7 @@ export function computeLiveSessionState(input: LiveSessionInput): LiveSessionSta
       remainingSafeSeconds: null,
       progress: 0,
       flipCount,
+      protectionReality: NO_RISK_PROTECTION,
     }
   }
 
@@ -45,6 +59,16 @@ export function computeLiveSessionState(input: LiveSessionInput): LiveSessionSta
     status = 'caution'
   }
 
+  // Protection reality — derived from SPF preset and elapsed time.
+  const uvCategory = classifyUv(input.uvIndex)
+  const protectionLevel = spfToProtectionLevel(input.spf)
+  const protectionReality = buildProtectionReality({
+    protectionLevel,
+    elapsedMinutes,
+    uvCategory,
+    sunSensitivity: input.sunSensitivity ?? null,
+  })
+
   return {
     status,
     elapsedSeconds,
@@ -53,5 +77,6 @@ export function computeLiveSessionState(input: LiveSessionInput): LiveSessionSta
     remainingSafeSeconds,
     progress,
     flipCount,
+    protectionReality,
   }
 }

@@ -32,6 +32,7 @@ export default function LiveSessionScreen() {
   useKeepAwake()
 
   const skinType = useProfileStore((s) => s.profile?.skinType ?? null)
+  const sunSensitivity = useProfileStore((s) => s.profile?.sunSensitivity ?? null)
   const uvForecast = useUvStore((s) => s.forecast)
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -40,7 +41,7 @@ export default function LiveSessionScreen() {
   const [showFlip, setShowFlip] = useState(false)
 
   const uvIndex = uvForecast?.current.uvIndex ?? 0
-  const state = computeLiveSessionState({ elapsedSeconds, skinType, uvIndex, spf })
+  const state = computeLiveSessionState({ elapsedSeconds, skinType, uvIndex, spf, sunSensitivity })
 
   // Tick every second while running.
   useEffect(() => {
@@ -134,6 +135,13 @@ export default function LiveSessionScreen() {
           })}
         </View>
 
+        {/* Protection note */}
+        {state.status !== 'no_risk' && state.protectionReality.explanation !== '' ? (
+          <AppText variant="caption" color="textMuted" style={styles.protectionNote}>
+            {state.protectionReality.explanation}
+          </AppText>
+        ) : null}
+
         {/* Clock */}
         <View style={styles.clockBlock}>
           <AppText variant="display" color={clockColor} style={styles.clock}>
@@ -167,6 +175,18 @@ export default function LiveSessionScreen() {
             </>
           ) : null}
         </Card>
+
+        {/* Reapply protection warning */}
+        {state.protectionReality.reapplyWarning ? (
+          <Card variant="elevated">
+            <AppText variant="bodyStrong" color="warning">
+              Reaplica la protección
+            </AppText>
+            <AppText variant="caption" color="textSecondary" style={styles.reapplyText}>
+              {state.protectionReality.explanation}
+            </AppText>
+          </Card>
+        ) : null}
 
         {/* Flip reminder */}
         {showFlip ? (
@@ -276,6 +296,13 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: radius.pill,
     backgroundColor: colors.brand,
+  },
+  protectionNote: {
+    lineHeight: 18,
+  },
+  reapplyText: {
+    marginTop: spacing.xs,
+    lineHeight: 18,
   },
   flipText: {
     marginTop: spacing.xs,

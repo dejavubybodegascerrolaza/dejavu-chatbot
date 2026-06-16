@@ -1,4 +1,5 @@
-import type { SkinType } from '../profile/profile.types'
+import type { SkinType, SunSensitivity } from '../profile/profile.types'
+import type { ProtectionReality } from '../protection/protection.types'
 
 /** Live session status, from safe to a clear stop signal. */
 export type LiveStatus = 'no_risk' | 'safe' | 'caution' | 'danger'
@@ -11,6 +12,8 @@ export type LiveSessionInput = {
   spf?: number
   /** Minutes between "turn over" reminders. */
   flipIntervalMinutes?: number
+  /** Profile sensitivity — used to tighten protection degradation thresholds. */
+  sunSensitivity?: SunSensitivity | null
 }
 
 export type LiveSessionState = {
@@ -26,4 +29,6 @@ export type LiveSessionState = {
   progress: number
   /** Number of completed flip intervals. */
   flipCount: number
+  /** Protection reliability and suggested next action. */
+  protectionReality: ProtectionReality
 }
