@@ -1,6 +1,7 @@
 import { mapOpenMeteoToForecast } from './uv.mapper'
 import { openMeteoResponseSchema } from './uv.schema'
 import type { Coordinates, UvForecast } from './uv.types'
+import { captureError, getAppContext } from '@/lib/observability'
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast'
 
@@ -28,6 +29,13 @@ export async function fetchUvForecast(coords: Coordinates): Promise<UvForecast> 
   const json: unknown = await response.json()
   const parsed = openMeteoResponseSchema.safeParse(json)
   if (!parsed.success) {
+    // Schema mismatch means the Open-Meteo API changed its response format —
+    // not a user error. Capture so we know to update the schema/mapper.
+    captureError(new Error('UV forecast schema mismatch'), {
+      module: 'uv.repository',
+      operation: 'fetchUvForecast',
+      ...getAppContext(),
+    })
     throw new Error('La respuesta del servicio de índice UV no es válida.')
   }
 

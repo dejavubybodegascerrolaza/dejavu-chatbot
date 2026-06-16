@@ -7,8 +7,11 @@ import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { ErrorState } from '@/components/feedback'
 import { colors } from '@/design'
+import { captureError, getAppContext } from '@/lib/observability'
 
-export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  captureError(error, { module: 'ErrorBoundary', ...getAppContext() })
+
   return (
     <View style={styles.errorContainer}>
       <ErrorState
