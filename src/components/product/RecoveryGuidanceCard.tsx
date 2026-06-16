@@ -38,6 +38,7 @@ export function RecoveryGuidanceCard({ recovery }: Props) {
       style={[styles.container, { backgroundColor: containerColor }]}
       accessibilityRole="alert"
       accessibilityLabel={`Aviso de recuperación: ${title}`}
+      testID="recovery-guidance-card"
     >
       <AppText variant="bodyStrong" style={[styles.title, { color: textColor }]}>
         {title}

@@ -236,6 +236,7 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
               onChangeText={onChange}
               onBlur={onBlur}
               error={errors.durationText?.message}
+              testID="session-log-duration-input"
             />
           )}
         />

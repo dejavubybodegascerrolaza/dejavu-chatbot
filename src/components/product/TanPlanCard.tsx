@@ -23,7 +23,12 @@ type Props = {
 export function TanPlanCard({ plan, onPress, adherence }: Props) {
   if (plan === null) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Crear mi plan">
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel="Crear mi plan"
+        testID="tan-plan-card"
+      >
         <Card variant="outlined">
           <AppText variant="bodyStrong">Crea tu plan de bronceado</AppText>
           <AppText variant="caption" color="textSecondary" style={styles.subtext}>
@@ -56,7 +61,12 @@ export function TanPlanCard({ plan, onPress, adherence }: Props) {
     !goalReached && !isPaused && adherence != null && adherence.status !== 'unknown'
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ver mi plan">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Ver mi plan"
+      testID="tan-plan-card"
+    >
       <Card variant="elevated">
         <View style={styles.header}>
           <AppText variant="label" color="textSecondary">

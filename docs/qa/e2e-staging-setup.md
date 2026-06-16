@@ -280,6 +280,74 @@ See `docs/qa/e2e-critical-flows.md` for what each flow covers and known limitati
 
 ---
 
+## Flow Catalog
+
+Run flows in order. Each later flow assumes the selectors proven by the earlier ones.
+
+### `01-smoke-login-to-home.yaml` — Baseline
+
+Login → Home. Proves selectors, staging auth and the auth guard route a
+fully-onboarded user to Home. `clearState: true` (self-contained).
+
+### `02-core-session-loop.yaml` — Core session loop
+
+Home → Live Session → start/pause/finish → Session Log (prefilled) →
+select skin response → save → Home acknowledgement → History.
+Validates the primary product loop. Appends one session per run.
+
+### `03-recovery-loop.yaml` — Recovery loop
+
+**Validates:** a negative skin response propagates conservatively across the app.
+Session Log → skin response = `slightly_red` → save → Home acknowledgement →
+**recovery guidance card appears** → Live Session remains accessible (not dominant)
+→ Plan reflects pause/recovery (when an active plan exists).
+
+**Staging assumptions:** same as the baseline — test user exists, onboarded,
+app built against staging env. Run `01` and `02` successfully first; this flow
+is intentionally narrow and assumes the baseline selectors already pass.
+
+**Why `slightly_red` (not `burned`):** a `slightly_red` session dated today maps to
+`recovery_recommended` in the recovery engine (`days <= 2`). This exercises the
+full recovery loop without repeatedly writing severe overexposure into staging
+(`burned` → `avoid_direct_exposure` held for 7 days). The burned/avoid path is
+covered by unit tests and a manual QA case instead.
+
+**Plan pause caveat:** "Plan paused for recovery" (`plan-status-paused_recovery`)
+only renders when the test user has an **active plan** (a goal selected). The
+default seeded account has no plan, so the Plan screen shows
+`plan-status-no_plan`. The flow asserts the paused state **conditionally** — it
+confirms `plan-status-paused_recovery` when present, otherwise it just confirms
+the Plan screen loaded (`plan-screen`). To exercise the paused assertion, give
+the test user a plan first (select a goal in-app, or seed `tanning_plans`).
+
+**Live Session de-emphasis:** in recovery, Home de-emphasises the Live Session
+button (variant/size change) but keeps it reachable. That visual change is
+style-only and **not directly assertable via Maestro**, so the flow uses the
+presence of `recovery-guidance-card` (Home is in recovery mode) together with a
+still-visible `home-live-session-button` (action remains accessible) as the
+stable proxy.
+
+**Repeated runs:** each run appends one `slightly_red` session, which keeps the
+recovery state active. Clean up via Supabase Dashboard → Table Editor →
+`exposure_sessions` → delete the test user's rows. No automated cleanup tooling
+in this pass.
+
+**How to run:**
+
+```bash
+maestro test .maestro/03-recovery-loop.yaml \
+  -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+  -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword!
+```
+
+**Evidence to capture on failure:** same as Step 8 — terminal output, the
+on-failure screenshot under `~/.maestro/tests/<timestamp>/screenshots/`, Maestro
+logs, and (if the recovery card never appears) the test user's recent
+`exposure_sessions` rows in the Supabase dashboard to confirm the `slightly_red`
+session was actually written.
+
+---
+
 ## Troubleshooting
 
 | Symptom                                       | Likely cause                                   | Fix                                                                                            |

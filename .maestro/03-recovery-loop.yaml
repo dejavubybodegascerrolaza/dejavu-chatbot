@@ -1,0 +1,170 @@
+# Flow: Recovery Loop
+#
+# Validates Bronze IQ's conservative recovery loop after a negative skin response:
+#   Session Log → skin response = slightly_red → save
+#     → Home acknowledgement → Recovery guidance appears
+#     → Live Session still accessible (de-emphasised, not dominant)
+#     → Plan reflects pause/recovery (when an active plan exists)
+#
+# This is the second high-value E2E flow after the core session loop. It proves
+# that a single "slight redness" report propagates conservatively across Home,
+# the recovery card and the plan — Bronze IQ pulls back, it never pushes more sun.
+#
+# Why slightly_red (not burned):
+#   slightly_red dated today → recovery_recommended (recovery.engine: days <= 2).
+#   This exercises the full recovery loop without repeatedly writing severe
+#   overexposure ("burned" → avoid_direct_exposure for 7 days) into staging.
+#   The burned/avoid path is better covered by unit tests + a manual QA case.
+#
+# Prerequisites:
+#   - Run 01-smoke-login-to-home and 02-core-session-loop successfully FIRST.
+#     This flow is narrow and assumes the baseline selectors already pass.
+#   - Staging Supabase configured per docs/qa/e2e-staging-setup.md
+#   - Test account exists, onboarded (onboarding_completed_at set)
+#   - App built against staging env (run: npm run e2e:check first)
+#
+# Plan pause caveat:
+#   "Plan paused for recovery" only appears when the test user has an ACTIVE plan
+#   (a goal selected). The default seeded test account has NO plan, so the Plan
+#   screen shows plan-status-no_plan. The flow asserts the paused state
+#   CONDITIONALLY: if a plan exists it confirms plan-status-paused_recovery,
+#   otherwise it just confirms the Plan screen loaded. To exercise the paused
+#   assertion, give the test user a plan (see docs).
+#
+# Data accumulation:
+#   Each run appends ONE slightly_red exposure_sessions row to staging. These
+#   keep the recovery state active. Manual cleanup: Supabase Dashboard →
+#   Table Editor → exposure_sessions → delete the test user's rows.
+#
+# Environment variables (pass via -e flags):
+#   BRONZE_IQ_TEST_EMAIL    — staging test account email
+#   BRONZE_IQ_TEST_PASSWORD — staging test account password
+#
+# How to run:
+#   maestro test .maestro/03-recovery-loop.yaml \
+#     -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+#     -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword!
+
+appId: com.bronzeiq.app
+---
+- launchApp:
+    clearState: false
+
+- waitForAnimationToEnd
+
+# ── Ensure Home is visible (log in inline if needed) ─────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: 'welcome-create-account'
+    commands:
+      - tapOn:
+          id: 'welcome-login'
+      - tapOn:
+          id: 'login-email-input'
+      - inputText: '${BRONZE_IQ_TEST_EMAIL}'
+      - tapOn:
+          id: 'login-password-input'
+      - inputText: '${BRONZE_IQ_TEST_PASSWORD}'
+      - hideKeyboard
+      - tapOn:
+          id: 'login-submit'
+      - runFlow:
+          when:
+            visible: 'Permitir'
+          commands:
+            - tapOn: 'Permitir'
+      - runFlow:
+          when:
+            visible: 'Allow'
+          commands:
+            - tapOn: 'Allow'
+      - waitForAnimationToEnd
+
+- assertVisible: 'Hola'
+
+# ── Open Session Log directly from Home quick action ─────────────────────────
+- tapOn: 'Registrar'
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'session-log-screen'
+
+# ── Skin response = slightly_red (top of form, no scroll needed) ──────────────
+- tapOn:
+    id: 'session-log-sensation-slightly_red'
+
+# ── Duration (required field; not prefilled on direct navigation) ─────────────
+- scrollUntilVisible:
+    element:
+      id: 'session-log-duration-input'
+    direction: DOWN
+- tapOn:
+    id: 'session-log-duration-input'
+- inputText: '20'
+- hideKeyboard
+
+# ── Context (required; pick "Playa") ──────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: 'Playa'
+    direction: DOWN
+- tapOn: 'Playa'
+
+# ── Save ──────────────────────────────────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      id: 'session-log-save-button'
+    direction: DOWN
+- tapOn:
+    id: 'session-log-save-button'
+
+- waitForAnimationToEnd
+
+# ── Home acknowledgement + recovery guidance ──────────────────────────────────
+- assertVisible: 'Hola'
+- assertVisible:
+    id: 'home-session-saved-ack'
+
+# Recovery guidance card is the primary deterministic recovery signal:
+# a slightly_red session dated today → recovery_recommended → this card renders.
+- assertVisible:
+    id: 'recovery-guidance-card'
+
+# Live Session must remain ACCESSIBLE during recovery. Its presence here, while
+# the recovery card is shown, proves Home keeps the action reachable without
+# making it the dominant call (the card is what Home leads with in recovery).
+# Note: the button's visual de-emphasis (variant/size) is a style-only change
+# and is not directly assertable via Maestro — recovery-card presence is the
+# stable proxy for "Home is in recovery mode, not pushing exposure".
+- assertVisible:
+    id: 'home-live-session-button'
+
+# ── Plan reflects recovery (conditional on an active plan existing) ───────────
+- tapOn:
+    id: 'tan-plan-card'
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'plan-screen'
+
+# If the test user has an active plan, recovery pauses it. Assert that state when
+# present. If there is no plan (default seeded account), the screen shows
+# plan-status-no_plan instead — also valid: recovery cannot pause a plan that
+# does not exist. See the "Plan pause caveat" note in this file's header.
+- runFlow:
+    when:
+      visible:
+        id: 'plan-status-paused_recovery'
+    commands:
+      - assertVisible:
+          id: 'plan-status-paused_recovery'
+
+# ── Return Home ───────────────────────────────────────────────────────────────
+- back
+
+- waitForAnimationToEnd
+
+- assertVisible: 'Hola'

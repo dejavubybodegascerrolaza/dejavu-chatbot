@@ -6,6 +6,7 @@ import type { PlanStatusSummary, PlanStatusTone } from '@/modules/plan/plan.pres
 
 type Props = {
   summary: PlanStatusSummary
+  testID?: string | undefined
 }
 
 const TITLE_COLOR: Record<PlanStatusTone, 'success' | 'warning' | 'textPrimary'> = {
@@ -18,9 +19,9 @@ const TITLE_COLOR: Record<PlanStatusTone, 'success' | 'warning' | 'textPrimary'>
  * Compact "plan status at a glance" card shown at the top of the Plan screen.
  * Purely presentational — all state mapping happens in resolvePlanStatus.
  */
-export function PlanStatusCard({ summary }: Props) {
+export function PlanStatusCard({ summary, testID }: Props) {
   return (
-    <Card variant="outlined">
+    <Card variant="outlined" testID={testID}>
       <AppText variant="label" color="textSecondary" style={styles.label}>
         Estado del plan
       </AppText>

@@ -81,13 +81,15 @@ export default function PlanScreen() {
   const showStatusCard = plan === null || plan.status !== 'goal_below_current'
 
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']} testID="plan-screen">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {showStatusCard ? <PlanStatusCard summary={planStatus} /> : null}
+        {showStatusCard ? (
+          <PlanStatusCard summary={planStatus} testID={`plan-status-${planStatus.key}`} />
+        ) : null}
 
         {planStoreError !== null ? (
           <View style={styles.errorBanner} accessibilityRole="alert">
