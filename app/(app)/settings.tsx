@@ -15,6 +15,7 @@ import {
 } from '@/modules/profile/profile.labels'
 import { buildCalibrationProfile } from '@/modules/calibration'
 import { useNotificationStore } from '@/modules/notifications/notifications.store'
+import { PRIVACY_DATA_ITEMS } from '@/modules/privacy/privacy.copy'
 
 export default function SettingsScreen() {
   const { logout, isSubmitting: isLoggingOut } = useAuthStore()
@@ -71,7 +72,34 @@ export default function SettingsScreen() {
             skinTypeLabel={getSkinTypeLabel(profile.skinType)}
             calibrationSummary={buildCalibrationProfile(profile).summary}
           />
-          <SettingsRow title="Editar perfil" onPress={() => router.push('/(app)/edit-profile')} />
+          <SettingsRow
+            title="Editar perfil"
+            description="Alias, objetivo, sensibilidad al sol y fototipo"
+            onPress={() => router.push('/(app)/edit-profile')}
+            accessibilityLabel="Editar perfil"
+          />
+        </View>
+
+        {/* Privacy & data explanation */}
+        <View style={styles.section}>
+          <AppText variant="label" color="textMuted" style={styles.sectionTitle}>
+            TUS DATOS
+          </AppText>
+          <View style={styles.dataCard} accessibilityRole="text">
+            <AppText variant="caption" color="textSecondary" style={styles.dataCardHeading}>
+              Para qué usa Bronze IQ tus datos
+            </AppText>
+            {PRIVACY_DATA_ITEMS.map((item) => (
+              <View key={item} style={styles.dataRow}>
+                <AppText variant="caption" color="textMuted" style={styles.dataBullet}>
+                  ·
+                </AppText>
+                <AppText variant="caption" color="textSecondary" style={styles.dataItemText}>
+                  {item}
+                </AppText>
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Notifications section */}
@@ -97,36 +125,37 @@ export default function SettingsScreen() {
           ) : null}
           <NotificationToggleRow
             title="Alertas de pico UV"
-            description="Aviso 30 min antes de que llegue el UV alto"
+            description="Aviso 30 min antes del pico UV de tu zona"
             value={notificationPrefs.uvAlertsEnabled}
             onValueChange={(v) => setPreference('uvAlertsEnabled', v)}
             disabled={!notificationsGranted}
           />
           <NotificationToggleRow
             title="Recordatorio de sesión"
-            description="Aviso diario cuando tienes un plan activo"
+            description="Aviso diario con plan activo. En recuperación, se convierte en aviso de pausa."
             value={notificationPrefs.sessionRemindersEnabled}
             onValueChange={(v) => setPreference('sessionRemindersEnabled', v)}
             disabled={!notificationsGranted}
           />
           <NotificationToggleRow
             title="Protección de racha"
-            description="Recordatorio a las 17h para no romper tu racha"
+            description="Recordatorio a las 17h para mantener tu racha de días sin quemadura"
             value={notificationPrefs.streakRemindersEnabled}
             onValueChange={(v) => setPreference('streakRemindersEnabled', v)}
             disabled={!notificationsGranted}
           />
         </View>
 
-        {/* Legal section */}
+        {/* Limits / disclaimer section */}
         <View style={styles.section}>
           <AppText variant="label" color="textMuted" style={styles.sectionTitle}>
-            SEGURIDAD Y RESPONSABILIDAD
+            LÍMITES Y ALCANCE
           </AppText>
           <SettingsRow
             title="Leer disclaimer"
-            description="Límites y alcance de Bronze IQ"
+            description="Qué hace y qué no hace Bronze IQ"
             onPress={() => router.push('/(app)/disclaimer')}
+            accessibilityLabel="Leer el disclaimer de Bronze IQ"
           />
         </View>
 
@@ -137,9 +166,10 @@ export default function SettingsScreen() {
           </AppText>
           <SettingsRow
             title="Solicitar eliminación de datos"
-            description="Registra una solicitud para eliminar tu cuenta y datos"
+            description="Registra una solicitud. Se procesa en un máximo de 30 días."
             onPress={() => router.push('/(app)/deletion-request')}
             variant="danger"
+            accessibilityLabel="Solicitar eliminación de mis datos"
           />
         </View>
 
@@ -182,5 +212,26 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: spacing.xs,
     letterSpacing: 0.5,
+  },
+  dataCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  dataCardHeading: {
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  dataRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  dataBullet: {
+    lineHeight: 18,
+  },
+  dataItemText: {
+    flex: 1,
+    lineHeight: 18,
   },
 })

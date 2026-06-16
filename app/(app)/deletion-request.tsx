@@ -6,6 +6,7 @@ import { AppText, Button } from '@/components/ui'
 import { colors, spacing } from '@/design'
 import { useAuthStore } from '@/modules/auth/auth.store'
 import { usePrivacyStore } from '@/modules/privacy/privacy.store'
+import { DELETION_COPY } from '@/modules/privacy/privacy.copy'
 
 export default function DeletionRequestScreen() {
   const user = useAuthStore((s) => s.user)
@@ -15,21 +16,17 @@ export default function DeletionRequestScreen() {
   const isSubmitting = status === 'submitting'
 
   const handleRequest = () => {
-    Alert.alert(
-      '¿Solicitar eliminación?',
-      'Registraremos una solicitud de eliminación de tus datos. La solicitud será procesada en un máximo de 30 días.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Solicitar',
-          style: 'destructive',
-          onPress: async () => {
-            if (!user?.id) return
-            await requestDeletion(user.id)
-          },
+    Alert.alert(DELETION_COPY.alertTitle, DELETION_COPY.alertBody, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Solicitar',
+        style: 'destructive',
+        onPress: async () => {
+          if (!user?.id) return
+          await requestDeletion(user.id)
         },
-      ]
-    )
+      },
+    ])
   }
 
   if (status === 'success') {
@@ -37,11 +34,10 @@ export default function DeletionRequestScreen() {
       <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.centeredContent}>
           <AppText variant="title" style={styles.centeredTitle}>
-            Solicitud registrada
+            {DELETION_COPY.successTitle}
           </AppText>
           <AppText variant="body" color="textSecondary" style={styles.centeredText}>
-            Hemos registrado tu solicitud. La procesaremos en un máximo de 30 días conforme a
-            nuestra política de privacidad.
+            {DELETION_COPY.successBody}
           </AppText>
           <View style={styles.successActions}>
             <Button
@@ -74,13 +70,11 @@ export default function DeletionRequestScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppText variant="body" color="textSecondary">
-          Puedes solicitar la eliminación de tus datos asociados a Bronze IQ. La solicitud quedará
-          registrada y será procesada en un máximo de 30 días.
+          {DELETION_COPY.explanation}
         </AppText>
 
         <AppText variant="body" color="textMuted" style={styles.notice}>
-          Esta acción no elimina tu cuenta de forma inmediata. Registra la solicitud y la
-          tramitaremos conforme a nuestra política de privacidad.
+          {DELETION_COPY.notice}
         </AppText>
 
         {status === 'error' ? (

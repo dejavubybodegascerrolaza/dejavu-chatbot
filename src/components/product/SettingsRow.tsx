@@ -10,9 +10,16 @@ type Props = {
   description?: string
   onPress: () => void
   variant?: Variant
+  accessibilityLabel?: string
 }
 
-export function SettingsRow({ title, description, onPress, variant = 'normal' }: Props) {
+export function SettingsRow({
+  title,
+  description,
+  onPress,
+  variant = 'normal',
+  accessibilityLabel,
+}: Props) {
   const isDanger = variant === 'danger'
 
   return (
@@ -20,7 +27,7 @@ export function SettingsRow({ title, description, onPress, variant = 'normal' }:
       onPress={onPress}
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel ?? title}
     >
       <View style={styles.textGroup}>
         <AppText variant="body" color={isDanger ? 'danger' : 'textPrimary'}>

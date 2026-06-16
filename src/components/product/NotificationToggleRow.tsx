@@ -37,6 +37,7 @@ export function NotificationToggleRow({
         trackColor={{ false: colors.border, true: colors.brand }}
         thumbColor={colors.surface}
         accessibilityLabel={title}
+        accessibilityHint={description}
         accessibilityRole="switch"
         accessibilityState={{ checked: value, disabled }}
       />
