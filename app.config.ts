@@ -8,7 +8,9 @@ const config: ExpoConfig = {
   name: 'Bronze IQ',
   slug: 'bronze-iq',
   owner: 'enriquecerrolaza',
-  version: '0.1.0',
+  // User-facing version string shown in the App Store / TestFlight.
+  // iOS buildNumber is auto-incremented by EAS (eas.json → build.production.autoIncrement).
+  version: '1.0.0',
   // scheme is used for deep links (e.g. OAuth callbacks). Must be unique.
   scheme: 'bronzeiq',
   platforms: ['ios', 'android'],

@@ -43,10 +43,11 @@ Preparado pero **no se debe ejecutar** hasta aprobación explícita. Genera el b
 - [ ] Login: `eas login`
 - [ ] Proyecto vinculado: `eas build:configure` (genera `extra.eas.projectId` en app.config.ts)
 - [ ] Variables de entorno en `.env.local` (ver `.env.example`)
-- [ ] Las variables `EXPO_PUBLIC_*` deben configurarse también en EAS si se usan en builds cloud:
+- [ ] Las variables `EXPO_PUBLIC_*` deben configurarse también en EAS si se usan en builds cloud
+      (`eas secret:create` está deprecado en EAS CLI ≥ 13 — usar `eas env:create`):
   ```
-  eas secret:create --name EXPO_PUBLIC_SUPABASE_URL --value "https://..."
-  eas secret:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "..."
+  eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --environment production
+  eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --environment production
   ```
 
 ### Build Android (preview)
@@ -96,12 +97,12 @@ npm run build:preview:all
 
 ## Variables de entorno en EAS
 
-Las variables `EXPO_PUBLIC_*` están incluidas en el bundle del cliente (no son secretas). Para builds cloud, deben configurarse en EAS:
+Las variables `EXPO_PUBLIC_*` están incluidas en el bundle del cliente (no son secretas). Para builds cloud, deben configurarse en EAS. `eas secret:create` está **deprecado** en EAS CLI ≥ 13 — usar `eas env:create`, que pide el valor de forma interactiva y lo asocia a un entorno (`development` / `preview` / `production`):
 
 ```bash
-# Configurar secrets en EAS (una vez, por proyecto)
-eas secret:create --name EXPO_PUBLIC_SUPABASE_URL --value "https://tu-proyecto.supabase.co"
-eas secret:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "tu-anon-key"
+# Configurar variables en EAS (una vez, por proyecto y entorno)
+eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --environment production
+eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --environment production
 ```
 
 > `SUPABASE_SERVICE_ROLE_KEY` **NUNCA** debe añadirse al cliente ni a los builds móviles.
