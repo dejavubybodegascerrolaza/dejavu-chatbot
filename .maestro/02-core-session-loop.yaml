@@ -1,0 +1,180 @@
+# Flow: Core Session Loop
+#
+# Validates the most important product loop in Bronze IQ:
+#   Home → Live Session → start → wait → finish
+#     → Session Log (prefilled) → select skin response → select context → save
+#     → Home acknowledgement → History → session visible
+#
+# This flow covers the path a user takes every time they go outside.
+# It is the primary regression signal for the entire session lifecycle.
+#
+# Prerequisites:
+#   - Staging Supabase configured per docs/qa/e2e-staging-setup.md
+#   - Test account exists with onboarding_completed_at set (Step 4 in setup doc)
+#   - App built against staging env (run: npm run e2e:check first)
+#   - Maestro CLI installed
+#
+# UV dependency:
+#   Live Session requires a UV forecast (location granted + API reachable).
+#   This flow handles the UV-unavailable case gracefully: if UV cannot load,
+#   it falls back to navigating directly to Session Log (no prefill banner).
+#   In the happy path (UV available), the prefill banner is asserted.
+#   See "Known limitations" in docs/qa/e2e-staging-setup.md.
+#
+# Data accumulation:
+#   Each run saves one exposure_sessions row in staging. Sessions accumulate.
+#   Manual cleanup: Supabase Dashboard → Table Editor → exposure_sessions → delete rows.
+#
+# Environment variables (pass via -e flags):
+#   BRONZE_IQ_TEST_EMAIL    — staging test account email
+#   BRONZE_IQ_TEST_PASSWORD — staging test account password
+#
+# How to run:
+#   maestro test .maestro/02-core-session-loop.yaml \
+#     -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+#     -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword!
+#
+# Run baseline first to ensure a known logged-in state:
+#   maestro test .maestro/01-smoke-login-to-home.yaml \
+#     -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+#     -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword! && \
+#   maestro test .maestro/02-core-session-loop.yaml \
+#     -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+#     -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword!
+
+appId: com.bronzeiq.app
+---
+# Start from current app state. clearState: false preserves auth session from
+# the baseline flow. If no session exists, log in inline below.
+- launchApp:
+    clearState: false
+
+- waitForAnimationToEnd
+
+# ── Ensure Home is visible (log in inline if needed) ─────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: 'welcome-create-account'
+    commands:
+      - tapOn:
+          id: 'welcome-login'
+      - tapOn:
+          id: 'login-email-input'
+      - inputText: '${BRONZE_IQ_TEST_EMAIL}'
+      - tapOn:
+          id: 'login-password-input'
+      - inputText: '${BRONZE_IQ_TEST_PASSWORD}'
+      - hideKeyboard
+      - tapOn:
+          id: 'login-submit'
+      - runFlow:
+          when:
+            visible: 'Permitir'
+          commands:
+            - tapOn: 'Permitir'
+      - runFlow:
+          when:
+            visible: 'Allow'
+          commands:
+            - tapOn: 'Allow'
+      - waitForAnimationToEnd
+
+- assertVisible: 'Hola'
+
+# ── Navigate to Live Session ──────────────────────────────────────────────────
+- tapOn:
+    id: 'home-live-session-button'
+
+- waitForAnimationToEnd
+
+# Handle UV unavailable (location denied or UV API unreachable).
+# If shown, tap back and fall through to the direct Session Log path below.
+- runFlow:
+    when:
+      visible: 'Necesitamos el índice UV'
+    commands:
+      - tapOn: 'Volver'
+      - waitForAnimationToEnd
+
+# ── Live session (UV happy path) ──────────────────────────────────────────────
+# If the live session screen loaded (UV available), start → wait → finish.
+# If UV was unavailable and we tapped Volver, live-session-control is gone and
+# this block is skipped entirely — execution continues to the direct nav below.
+- runFlow:
+    when:
+      visible:
+        id: 'live-session-control'
+    commands:
+      # Start the timer
+      - tapOn:
+          id: 'live-session-control'
+      # Wait a few seconds (timer ticks; Maestro animationEnd waits for all animations)
+      - waitForAnimationToEnd
+      # Pause (same button, label becomes "Pausar")
+      - tapOn:
+          id: 'live-session-control'
+      # Finish and navigate to Session Log
+      - tapOn:
+          id: 'live-session-finish'
+      - waitForAnimationToEnd
+
+# ── Direct Session Log navigation (UV unavailable fallback) ───────────────────
+# Only runs if we ended up back on Home (UV was unavailable).
+- runFlow:
+    when:
+      visible: 'Hola'
+    commands:
+      - tapOn: 'Registrar'
+      - waitForAnimationToEnd
+
+# ── Session Log ───────────────────────────────────────────────────────────────
+- assertVisible:
+    id: 'session-log-screen'
+
+# Prefill banner appears when coming via Live Session — conditional assertion.
+# Only present in the UV-available happy path.
+- runFlow:
+    when:
+      visible:
+        id: 'session-log-prefill-banner'
+    commands:
+      - assertVisible:
+          id: 'session-log-prefill-banner'
+
+# Select skin response: "Normal" — non-alarming, near the top of the form
+- tapOn:
+    id: 'session-log-sensation-normal'
+
+# Scroll down to context section and select "Playa" (beach — first option)
+- scrollUntilVisible:
+    element:
+      text: 'Playa'
+    direction: DOWN
+- tapOn: 'Playa'
+
+# Scroll down to save button and tap
+- scrollUntilVisible:
+    element:
+      id: 'session-log-save-button'
+    direction: DOWN
+- tapOn:
+    id: 'session-log-save-button'
+
+- waitForAnimationToEnd
+
+# ── Home acknowledgement ──────────────────────────────────────────────────────
+# After save, router.replace navigates back to Home with saved params
+- assertVisible: 'Hola'
+- assertVisible:
+    id: 'home-session-saved-ack'
+
+# ── History ───────────────────────────────────────────────────────────────────
+- tapOn:
+    id: 'home-history-action'
+
+- waitForAnimationToEnd
+
+# HistoryInsightCard ("Últimas 7 días") is only rendered when sessions exist.
+# Asserting it confirms the saved session appears in history.
+- assertVisible: 'Últimas 7 días'

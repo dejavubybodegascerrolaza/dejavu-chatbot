@@ -151,7 +151,11 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
       keyboardShouldPersistTaps="handled"
     >
       {isPrefilled ? (
-        <View style={styles.prefillBanner} accessibilityRole="summary">
+        <View
+          style={styles.prefillBanner}
+          accessibilityRole="summary"
+          testID="session-log-prefill-banner"
+        >
           <AppText variant="bodyStrong" color="brand">
             Datos rellenados automáticamente
           </AppText>
@@ -180,6 +184,7 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
                   description={opt.description}
                   selected={value === opt.value}
                   onPress={() => onChange(opt.value)}
+                  testID={`session-log-sensation-${opt.value}`}
                 />
               ))}
               {errors.sensationAfter ? (
@@ -352,6 +357,7 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
           loading={isSubmitting}
           onPress={() => void handleSubmit(onSubmit)()}
           accessibilityLabel="Guardar sesión de exposición"
+          testID="session-log-save-button"
         />
         <Button
           label="Cancelar"

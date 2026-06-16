@@ -328,6 +328,7 @@ export default function HomeScreen() {
           <View
             style={[styles.ackBanner, { backgroundColor: ACK_TONE_BG[acknowledgement.tone] }]}
             accessibilityRole="summary"
+            testID="home-session-saved-ack"
           >
             <View style={styles.ackTextGroup}>
               <AppText variant="bodyStrong" color={ACK_TONE_TEXT[acknowledgement.tone]}>
@@ -467,6 +468,7 @@ export default function HomeScreen() {
               label: 'Historial',
               onPress: () => router.push('/(app)/history'),
               accessibilityLabel: 'Ver historial completo de sesiones',
+              testID: 'home-history-action',
             },
             {
               label: 'Ajustes',

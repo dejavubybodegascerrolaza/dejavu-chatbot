@@ -8,9 +8,10 @@ type Props = {
   description?: string | undefined
   selected: boolean
   onPress: () => void
+  testID?: string | undefined
 }
 
-export function ProfileOptionCard({ label, description, selected, onPress }: Props) {
+export function ProfileOptionCard({ label, description, selected, onPress, testID }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -19,6 +20,7 @@ export function ProfileOptionCard({ label, description, selected, onPress }: Pro
       accessibilityState={{ checked: selected }}
       accessibilityLabel={label}
       accessibilityHint={description}
+      testID={testID}
     >
       <View style={[styles.indicator, selected ? styles.indicatorSelected : styles.indicatorIdle]}>
         {selected ? <View style={styles.dot} /> : null}

@@ -7,6 +7,7 @@ export type QuickAction = {
   label: string
   onPress: () => void
   accessibilityLabel: string
+  testID?: string | undefined
 }
 
 type Props = {
@@ -22,6 +23,7 @@ export function QuickActionsBar({ actions }: Props) {
           onPress={action.onPress}
           accessibilityRole="button"
           accessibilityLabel={action.accessibilityLabel}
+          testID={action.testID}
           style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
         >
           <AppText variant="label" color="brand" style={styles.tileLabel}>

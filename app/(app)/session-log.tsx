@@ -41,7 +41,7 @@ export default function SessionLogScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="session-log-screen">
       <View style={styles.header}>
         <AppText variant="heading">Registrar exposición</AppText>
       </View>
