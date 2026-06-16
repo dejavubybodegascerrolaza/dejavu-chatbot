@@ -22,65 +22,65 @@ appId: com.bronzeiq.app
     clearState: true
 
 # Welcome screen
-- assertVisible: "Bronze IQ"
+- assertVisible: 'Bronze IQ'
 - tapOn:
-    id: "welcome-create-account"
+    id: 'welcome-create-account'
 
 # Register form
 - tapOn:
-    id: "register-email-input"
-- inputText: "${BRONZE_IQ_TEST_EMAIL}"
+    id: 'register-email-input'
+- inputText: '${BRONZE_IQ_TEST_EMAIL}'
 - tapOn:
-    id: "register-password-input"
-- inputText: "${BRONZE_IQ_TEST_PASSWORD}"
+    id: 'register-password-input'
+- inputText: '${BRONZE_IQ_TEST_PASSWORD}'
 - tapOn:
-    id: "register-confirm-password-input"
-- inputText: "${BRONZE_IQ_TEST_PASSWORD}"
+    id: 'register-confirm-password-input'
+- inputText: '${BRONZE_IQ_TEST_PASSWORD}'
 - hideKeyboard
 - tapOn:
-    id: "register-submit"
+    id: 'register-submit'
 
 # If email confirmation required, flow ends here (expected)
 - runFlow:
     when:
-      visible: "Revisa tu email"
+      visible: 'Revisa tu email'
     commands:
-      - assertVisible: "Revisa tu email"
+      - assertVisible: 'Revisa tu email'
 
 # Onboarding step 0 — Intro 1
-- tapOn: "Continuar"
+- tapOn: 'Continuar'
 
 # Step 1 — Intro 2
-- tapOn: "Lo entiendo"
+- tapOn: 'Lo entiendo'
 
 # Step 2 — Intro 3
-- tapOn: "Continuar"
+- tapOn: 'Continuar'
 
 # Step 3 — Disclaimer: check checkbox then accept
 - tapOn:
-    id: "onboarding-disclaimer-checkbox"
+    id: 'onboarding-disclaimer-checkbox'
 - tapOn:
-    id: "onboarding-disclaimer-accept"
+    id: 'onboarding-disclaimer-accept'
 
 # Step 4 — Alias
 - tapOn:
-    id: "onboarding-alias-input"
-- inputText: "TestUser"
+    id: 'onboarding-alias-input'
+- inputText: 'TestUser'
 - hideKeyboard
 - tapOn:
-    id: "onboarding-alias-continue"
+    id: 'onboarding-alias-continue'
 
 # Step 5 — Main goal
-- tapOn: "Evitar pasarme con el sol"
-- tapOn: "Continuar"
+- tapOn: 'Evitar pasarme con el sol'
+- tapOn: 'Continuar'
 
 # Step 6 — Sun sensitivity
-- tapOn: "Normalmente tolero exposiciones moderadas"
-- tapOn: "Continuar"
+- tapOn: 'Normalmente tolero exposiciones moderadas'
+- tapOn: 'Continuar'
 
 # Step 7 — Skin type (skip)
 - tapOn:
-    id: "onboarding-skip-skin-type"
+    id: 'onboarding-skip-skin-type'
 
 # Home should now be visible
-- assertVisible: "Hola"
+- assertVisible: 'Hola'

@@ -21,14 +21,14 @@ appId: com.bronzeiq.app
 - waitForAnimationToEnd
 
 # Home should still load without crashing
-- assertVisible: "Hola"
+- assertVisible: 'Hola'
 
 # Either the UV unavailable card or location-needed guidance should be visible
 - runFlow:
     when:
-      visible: "Índice UV no disponible"
+      visible: 'Índice UV no disponible'
     commands:
-      - assertVisible: "Índice UV no disponible"
+      - assertVisible: 'Índice UV no disponible'
 
 # App must remain navigable
-- assertVisible: "Sesión en directo"
+- assertVisible: 'Sesión en directo'

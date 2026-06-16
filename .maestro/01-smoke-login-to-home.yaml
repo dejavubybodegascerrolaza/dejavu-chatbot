@@ -1,56 +1,82 @@
 # Flow: Login → Home
 #
-# Prerequisites:
-#   - A test account must exist in the Supabase project (email + confirmed password).
-#   - The device/simulator must have Bronze IQ installed (dev or preview build).
-#   - Location permission will be requested on first launch — allow it for a full
-#     Home screen, or deny it to exercise the location-unavailable resilience path.
+# This is the RC-2Z.1 baseline flow. It proves that:
+#   (a) selectors reach the correct elements
+#   (b) staging Supabase auth accepts the test account
+#   (c) the auth guard routes a fully-onboarded user to Home
 #
-# Environment variables (set before running):
-#   BRONZE_IQ_TEST_EMAIL    — test account email
-#   BRONZE_IQ_TEST_PASSWORD — test account password
+# Prerequisites:
+#   - Staging Supabase project set up per docs/qa/e2e-staging-setup.md
+#   - Test account exists AND has onboarding_completed_at set (see setup doc Step 4)
+#   - App built against staging env (EXPO_PUBLIC_SUPABASE_URL = staging project)
+#   - Maestro CLI installed: curl -Ls "https://get.maestro.mobile.dev" | bash
+#
+# Environment variables (pass via -e flags, never hardcode):
+#   BRONZE_IQ_TEST_EMAIL    — e.g. e2e@bronzeiq.test
+#   BRONZE_IQ_TEST_PASSWORD — staging test account password
 #
 # How to run:
 #   maestro test .maestro/01-smoke-login-to-home.yaml \
-#     -e BRONZE_IQ_TEST_EMAIL=test@example.com \
-#     -e BRONZE_IQ_TEST_PASSWORD=testpassword123
+#     -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+#     -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword!
+#
+# On failure, capture evidence with:
+#   maestro test .maestro/01-smoke-login-to-home.yaml \
+#     -e BRONZE_IQ_TEST_EMAIL=e2e@bronzeiq.test \
+#     -e BRONZE_IQ_TEST_PASSWORD=YourStagingPassword! \
+#     --format junit --output maestro-report.xml
 #
 # Expected outcome:
-#   Home screen is visible with the today-decision card or a loading state.
+#   Home screen loads and the live-session button is visible.
 
 appId: com.bronzeiq.app
 ---
+# clearState: true ensures a predictable logged-out starting point on every run.
+# On iOS Simulator and Android Emulator this clears app sandbox data including
+# stored auth tokens, so the flow always starts from Welcome.
 - launchApp:
-    clearState: false
+    clearState: true
 
-# Should land on Welcome if not logged in
-- assertVisible: "Crear cuenta"
+# Allow app to settle after cold start
+- waitForAnimationToEnd
+
+# Welcome screen must be visible — use testID for stability
+- assertVisible:
+    id: 'welcome-create-account'
 
 # Navigate to Login
 - tapOn:
-    id: "welcome-login"
+    id: 'welcome-login'
 
-# Enter credentials
+# Enter credentials (injected via -e flags, never hardcoded)
 - tapOn:
-    id: "login-email-input"
-- inputText: "${BRONZE_IQ_TEST_EMAIL}"
+    id: 'login-email-input'
+- inputText: '${BRONZE_IQ_TEST_EMAIL}'
 - tapOn:
-    id: "login-password-input"
-- inputText: "${BRONZE_IQ_TEST_PASSWORD}"
+    id: 'login-password-input'
+- inputText: '${BRONZE_IQ_TEST_PASSWORD}'
 - hideKeyboard
 
-# Submit
+# Submit — triggers Supabase auth + profile fetch + navigation
 - tapOn:
-    id: "login-submit"
+    id: 'login-submit'
 
-# Allow location prompt if it appears (iOS system dialog)
+# Allow location prompt if it appears (iOS: "Permitir" / Android: "Allow")
 - runFlow:
     when:
-      visible: "Permitir"
+      visible: 'Permitir'
     commands:
-      - tapOn: "Permitir"
+      - tapOn: 'Permitir'
+- runFlow:
+    when:
+      visible: 'Allow'
+    commands:
+      - tapOn: 'Allow'
 
-# Home should be visible — check stable testID-anchored landmarks
-- assertVisible: "Hola"
+# Wait for network round-trip and Home screen mount
+- waitForAnimationToEnd
+
+# Home landmarks — "Hola" matches "Hola, <alias>" via substring
+- assertVisible: 'Hola'
 - assertVisible:
-    id: "home-live-session-button"
+    id: 'home-live-session-button'

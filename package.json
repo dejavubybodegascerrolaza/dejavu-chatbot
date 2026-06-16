@@ -70,7 +70,8 @@
     "build:dev:ios": "eas build --platform ios --profile development",
     "build:preview:android": "eas build --platform android --profile preview",
     "build:preview:ios": "eas build --platform ios --profile preview",
-    "build:preview:all": "eas build --platform all --profile preview"
+    "build:preview:all": "eas build --platform all --profile preview",
+    "e2e:check": "node scripts/check-e2e-env.mjs"
   },
   "private": true,
   "type": "module"

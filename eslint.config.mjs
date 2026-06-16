@@ -20,6 +20,6 @@ export default defineConfig([
     },
   },
   {
-    ignores: ['node_modules/**', '.expo/**', 'dist/**', 'coverage/**'],
+    ignores: ['node_modules/**', '.expo/**', 'dist/**', 'coverage/**', 'scripts/**'],
   },
 ])

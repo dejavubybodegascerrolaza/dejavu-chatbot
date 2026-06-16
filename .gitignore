@@ -33,6 +33,9 @@ yarn-error.*
 # local env files
 .env*.local
 .env.local
+# staging and E2E env files — contain test credentials, never commit
+.env.staging
+.env.e2e
 
 # test coverage
 coverage/

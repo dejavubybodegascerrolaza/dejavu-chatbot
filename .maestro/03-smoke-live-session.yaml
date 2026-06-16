@@ -18,25 +18,25 @@ appId: com.bronzeiq.app
 ---
 # Navigate to Live Session from Home
 - tapOn:
-    id: "home-live-session-button"
+    id: 'home-live-session-button'
 
 # Confirm the live session screen loaded
-- assertVisible: "Empezar"
+- assertVisible: 'Empezar'
 
 # Start the session
 - tapOn:
-    id: "live-session-control"
+    id: 'live-session-control'
 
 # Wait a moment for the timer to tick
 - waitForAnimationToEnd
 
 # Pause
 - tapOn:
-    id: "live-session-control"
+    id: 'live-session-control'
 
 # Finish and proceed to Session Log
 - tapOn:
-    id: "live-session-finish"
+    id: 'live-session-finish'
 
 # Should land on Session Log prefilled with elapsed time
-- assertVisible: "Registrar exposición"
+- assertVisible: 'Registrar exposición'

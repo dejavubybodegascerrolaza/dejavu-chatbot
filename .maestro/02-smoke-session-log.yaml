@@ -12,27 +12,27 @@
 appId: com.bronzeiq.app
 ---
 # Start from Home — navigate to Session Log via the register quick action
-- tapOn: "Registrar"
+- tapOn: 'Registrar'
 
 # Session Log screen
-- assertVisible: "Registrar exposición"
+- assertVisible: 'Registrar exposición'
 
 # Fill in duration (required field)
-- tapOn: "Minutos"
-- inputText: "30"
+- tapOn: 'Minutos'
+- inputText: '30'
 - hideKeyboard
 
 # Select a context option (beach/pool/urban/mountain/other)
-- tapOn: "Playa"
+- tapOn: 'Playa'
 
 # Select protection level
-- tapOn: "Media"
+- tapOn: 'Media'
 
 # Select skin response — choose "Normal" (non-recovery path for smoke test)
-- tapOn: "Normal"
+- tapOn: 'Normal'
 
 # Save
-- tapOn: "Guardar sesión de exposición"
+- tapOn: 'Guardar sesión de exposición'
 
 # Should return to Home with acknowledgement
-- assertVisible: "Hola"
+- assertVisible: 'Hola'
