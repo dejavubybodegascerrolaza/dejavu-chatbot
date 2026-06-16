@@ -12,6 +12,7 @@ import {
   RecoveryGuidanceCard,
   RecommendationCard,
   SessionCard,
+  SolarWindowCard,
   StreakCard,
   TanPlanCard,
   UvIndexCard,
@@ -26,7 +27,7 @@ import { useSessionStore } from '@/modules/sessions/session.store'
 import { SENSATION_LABELS } from '@/modules/sessions/session.labels'
 import { parseSessionSaveAcknowledgement } from '@/modules/sessions/session.acknowledgement'
 import type { SaveAckTone } from '@/modules/sessions/session.acknowledgement'
-import { useUvStore } from '@/modules/uv'
+import { buildSolarWindow, useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
 import { usePlanStore } from '@/modules/plan'
 import { buildGamificationSummary } from '@/modules/gamification'
@@ -175,6 +176,18 @@ export default function HomeScreen() {
         hasPlan: planGoal !== null,
       }),
     [historySessions, planGoal]
+  )
+
+  const solarWindow = useMemo(
+    () =>
+      uvForecast !== null
+        ? buildSolarWindow({
+            hourly: uvForecast.hourly,
+            currentHour: new Date().getHours(),
+            peakWindow: uvForecast.peakWindow,
+          })
+        : null,
+    [uvForecast]
   )
 
   // Schedule notifications whenever key data changes
@@ -373,6 +386,9 @@ export default function HomeScreen() {
 
         {/* Live UV */}
         {uvForecast !== null ? <UvIndexCard forecast={uvForecast} /> : null}
+
+        {/* Solar window — when to act; only shown for avoid_peak / better_later */}
+        {solarWindow !== null ? <SolarWindowCard solarWindow={solarWindow} /> : null}
 
         {showUvUnavailable ? (
           <Card variant="outlined">
