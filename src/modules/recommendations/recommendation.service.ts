@@ -10,6 +10,7 @@ import {
 } from './recommendation.rules'
 import type {
   Recommendation,
+  RecommendationCtaAction,
   RecommendationInput,
   RecommendationLevel,
   RecommendationProfileInput,
@@ -101,6 +102,7 @@ function buildOutput(
     message,
     reasons,
     ctaLabel: base.ctaLabel,
+    ctaAction: base.ctaAction,
     disclaimer: DISCLAIMER,
     weeklyExposureLoad,
   }
@@ -110,37 +112,42 @@ function buildOutput(
 
 const LEVEL_COPY: Record<
   RecommendationLevel,
-  { title: string; message: string; ctaLabel: string }
+  { title: string; message: string; ctaLabel: string; ctaAction: RecommendationCtaAction }
 > = {
   low: {
     title: 'Puedes empezar con prudencia',
     message:
       'No tienes una acumulación elevada en los últimos días. Si decides exponerte, hazlo de forma gradual, con protección adecuada y evitando excesos.',
     ctaLabel: 'Registrar sesión',
+    ctaAction: 'register',
   },
   moderate: {
     title: 'Mantén un ritmo gradual',
     message:
       'Tu historial reciente muestra exposición moderada. Bronze IQ recomienda mantener sesiones cortas y observar cómo responde tu piel.',
     ctaLabel: 'Registrar exposición',
+    ctaAction: 'register',
   },
   caution: {
     title: 'Hoy conviene ir con calma',
     message:
       'Has acumulado exposición reciente. Considera reducir duración, evitar horas intensas y escuchar cualquier señal de incomodidad.',
     ctaLabel: 'Ver historial',
+    ctaAction: 'history',
   },
   high_caution: {
     title: 'Prudencia alta',
     message:
       'Tu acumulación reciente sugiere bajar el ritmo. Bronze IQ recomienda priorizar descanso, sombra y protección.',
     ctaLabel: 'Ver historial',
+    ctaAction: 'history',
   },
   rest: {
     title: 'Mejor descansar de exposición directa',
     message:
       'Tu historial reciente sugiere que conviene evitar añadir más exposición directa por ahora.',
     ctaLabel: 'Revisar sesiones',
+    ctaAction: 'history',
   },
 }
 
@@ -149,6 +156,7 @@ const BURNED_COPY = {
   message:
     'Has registrado una señal clara de exceso. Bronze IQ recomienda evitar exposición directa y observar cómo evoluciona tu piel.',
   ctaLabel: 'Ver historial',
+  ctaAction: 'history' as const,
 }
 
 const SLIGHTLY_RED_COPY = {
@@ -156,6 +164,7 @@ const SLIGHTLY_RED_COPY = {
   message:
     'Tu historial reciente muestra enrojecimiento. Es mejor reducir exposición directa y priorizar recuperación.',
   ctaLabel: 'Registrar evolución',
+  ctaAction: 'register' as const,
 }
 
 const WARM_TIGHT_COPY = {
@@ -163,6 +172,7 @@ const WARM_TIGHT_COPY = {
   message:
     'Has registrado una señal de incomodidad. Bronze IQ recomienda prudencia antes de añadir más exposición.',
   ctaLabel: 'Ver historial',
+  ctaAction: 'history' as const,
 }
 
 // ── Main function ─────────────────────────────────────────────────────────────
@@ -181,6 +191,7 @@ export function generateRecommendation(input: RecommendationInput): Recommendati
       message: BURNED_COPY.message,
       reasons: ['burned_recently'],
       ctaLabel: BURNED_COPY.ctaLabel,
+      ctaAction: BURNED_COPY.ctaAction,
       disclaimer: DISCLAIMER,
       weeklyExposureLoad: weeklyLoad,
     }
@@ -197,6 +208,7 @@ export function generateRecommendation(input: RecommendationInput): Recommendati
       message: SLIGHTLY_RED_COPY.message,
       reasons: ['slightly_red_recently'],
       ctaLabel: SLIGHTLY_RED_COPY.ctaLabel,
+      ctaAction: SLIGHTLY_RED_COPY.ctaAction,
       disclaimer: DISCLAIMER,
       weeklyExposureLoad: weeklyLoad,
     }
@@ -213,6 +225,7 @@ export function generateRecommendation(input: RecommendationInput): Recommendati
       message: WARM_TIGHT_COPY.message,
       reasons: ['warm_tight_recently'],
       ctaLabel: WARM_TIGHT_COPY.ctaLabel,
+      ctaAction: WARM_TIGHT_COPY.ctaAction,
       disclaimer: DISCLAIMER,
       weeklyExposureLoad: weeklyLoad,
     }

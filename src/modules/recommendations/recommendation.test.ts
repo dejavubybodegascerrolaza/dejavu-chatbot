@@ -290,3 +290,39 @@ describe('calculateWeeklyExposureLoad', () => {
     expect(weekly).toBeCloseTo(single * 2, 1)
   })
 })
+
+// ── CTA action intent ───────────────────────────────────────────────────────────
+
+describe('generateRecommendation — ctaAction', () => {
+  it('low load suggests registering a session', () => {
+    const result = generateRecommendation(makeInput())
+    expect(result.level).toBe('low')
+    expect(result.ctaAction).toBe('register')
+  })
+
+  it('caution load points to reviewing history (not adding exposure)', () => {
+    const sessions = Array.from({ length: 5 }, () =>
+      makeSession({ durationMinutes: 30, context: 'urban', uvIndexManual: 7 })
+    )
+    const result = generateRecommendation(makeInput({ sessionsLast7Days: sessions }))
+    expect(result.level).toBe('caution')
+    expect(result.ctaAction).toBe('history')
+  })
+
+  it('burned recently points to history', () => {
+    const result = generateRecommendation(
+      makeInput({ sessionsLast7Days: [makeSession({ sensationAfter: 'burned' })] })
+    )
+    expect(result.ctaAction).toBe('history')
+  })
+
+  it('ctaAction is always register or history', () => {
+    const sessions = Array.from({ length: 5 }, () =>
+      makeSession({ durationMinutes: 30, context: 'urban', uvIndexManual: 7 })
+    )
+    const scenarios = [makeInput(), makeInput({ sessionsLast7Days: sessions })]
+    for (const input of scenarios) {
+      expect(['register', 'history']).toContain(generateRecommendation(input).ctaAction)
+    }
+  })
+})

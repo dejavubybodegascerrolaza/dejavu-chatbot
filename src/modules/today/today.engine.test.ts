@@ -194,6 +194,77 @@ describe('buildTodayDecision — state derivation', () => {
   })
 })
 
+describe('buildTodayDecision — CTA target alignment', () => {
+  it('ready state routes the CTA to register (log a session)', () => {
+    const result = buildTodayDecision(
+      makeInput({ uvForecast: makeUvForecast(3), locationStatus: 'ready' })
+    )
+    expect(result.state).toBe('ready')
+    expect(result.bestNextActionTarget).toBe('register')
+  })
+
+  it('caution state (high UV) routes the CTA to history, not register', () => {
+    const result = buildTodayDecision(
+      makeInput({ uvForecast: makeUvForecast(9), locationStatus: 'ready' })
+    )
+    expect(result.state).toBe('caution')
+    expect(result.bestNextActionTarget).toBe('history')
+  })
+
+  it('recovery state (burned) routes the CTA to history, never to a new session', () => {
+    const sessions = [makeSession({ sensationAfter: 'burned', sessionDate: YESTERDAY })]
+    const result = buildTodayDecision(makeInput({ recentSessions: sessions }))
+    expect(result.state).toBe('recovery')
+    expect(result.bestNextActionTarget).toBe('history')
+  })
+
+  it('avoid state (rest from load) routes the CTA to history', () => {
+    const sessions = Array.from({ length: 6 }, (_, i) =>
+      makeSession({
+        id: `sess-${i}`,
+        durationMinutes: 60,
+        context: 'beach',
+        uvIndexManual: 11,
+        protectionLevel: 'none',
+      })
+    )
+    const result = buildTodayDecision(
+      makeInput({ profile: SENSITIVE_PROFILE, recentSessions: sessions })
+    )
+    expect(result.state).toBe('avoid')
+    expect(result.bestNextActionTarget).toBe('history')
+  })
+
+  it('avoid_overexposure goal in ready state favours history over adding exposure', () => {
+    const result = buildTodayDecision(
+      makeInput({
+        profile: { ...BASE_PROFILE, mainGoal: 'avoid_overexposure' },
+        uvForecast: makeUvForecast(3),
+        locationStatus: 'ready',
+      })
+    )
+    expect(result.state).toBe('ready')
+    expect(result.bestNextAction).toBe('Ver mi historial')
+    expect(result.bestNextActionTarget).toBe('history')
+  })
+
+  it('label and target never contradict: history labels never route to register', () => {
+    const SCENARIOS: Array<Partial<TodayDecisionInput>> = [
+      { uvForecast: makeUvForecast(3), locationStatus: 'ready' },
+      { uvForecast: makeUvForecast(9), locationStatus: 'ready' },
+      { recentSessions: [makeSession({ sensationAfter: 'burned', sessionDate: YESTERDAY })] },
+      { recentSessions: [makeSession({ sensationAfter: 'warm_tight', sessionDate: TODAY })] },
+    ]
+    for (const overrides of SCENARIOS) {
+      const result = buildTodayDecision(makeInput(overrides))
+      const labelImpliesHistory = /historial|revisar sesiones/i.test(result.bestNextAction)
+      if (labelImpliesHistory) {
+        expect(result.bestNextActionTarget).toBe('history')
+      }
+    }
+  })
+})
+
 describe('buildTodayDecision — metadata', () => {
   it('minutesToBurnEstimate is null when no UV forecast', () => {
     const result = buildTodayDecision(makeInput({ uvForecast: null, locationStatus: 'ready' }))

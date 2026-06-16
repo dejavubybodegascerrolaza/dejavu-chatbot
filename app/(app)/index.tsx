@@ -23,7 +23,6 @@ import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
 import { SENSATION_LABELS } from '@/modules/sessions/session.labels'
-import { LEVEL_SUBTEXTS } from '@/modules/recommendations/recommendation.labels'
 import { useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
 import { usePlanStore } from '@/modules/plan'
@@ -183,6 +182,24 @@ export default function HomeScreen() {
     router.push('/(app)/session-log')
   }
 
+  // Route the Today Decision CTA to match its label's intent (logging vs. history)
+  // so the button never says one thing and does another.
+  const handleDecisionCta = () => {
+    if (todayDecision.bestNextActionTarget === 'history') {
+      router.push('/(app)/history')
+    } else {
+      handleRegister()
+    }
+  }
+
+  // In rest/recovery states Home must not push exposure. The live-session entry
+  // stays accessible but is de-emphasised so it doesn't contradict the guidance.
+  const deEmphasizeExposure =
+    todayDecision.state === 'recovery' ||
+    todayDecision.state === 'avoid' ||
+    todayDecision.recoveryStatus.level === 'recovery_recommended' ||
+    todayDecision.recoveryStatus.level === 'avoid_direct_exposure'
+
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRetry = () => {
@@ -216,7 +233,6 @@ export default function HomeScreen() {
   const skinType = profile?.skinType ?? null
 
   const alias = profile?.alias ?? ''
-  const level = todayDecision.recommendationLevel ?? 'low'
 
   if (isLoading) {
     return (
@@ -254,7 +270,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <AppText variant="title">{alias !== '' ? `Hola, ${alias}` : 'Hola'}</AppText>
           <AppText variant="body" color="textSecondary" style={styles.subtitle}>
-            {LEVEL_SUBTEXTS[level]}
+            Esto es lo que Bronze IQ sugiere hoy.
           </AppText>
         </View>
 
@@ -266,7 +282,7 @@ export default function HomeScreen() {
             level={todayDecision.recommendationLevel}
             reasons={todayDecision.reasons}
             ctaLabel={todayDecision.bestNextAction}
-            onCtaPress={handleRegister}
+            onCtaPress={handleDecisionCta}
           />
         ) : null}
 
@@ -332,11 +348,12 @@ export default function HomeScreen() {
           />
         ) : null}
 
-        {/* Live session CTA */}
+        {/* Live session CTA — de-emphasised in rest/recovery states so Home does
+            not push direct exposure while still keeping the action reachable. */}
         <Button
           label="Sesión en directo"
-          variant="primary"
-          size="lg"
+          variant={deEmphasizeExposure ? 'secondary' : 'primary'}
+          size={deEmphasizeExposure ? 'md' : 'lg'}
           fullWidth
           onPress={() => router.push('/(app)/live-session')}
           accessibilityLabel="Iniciar una sesión de exposición en directo"

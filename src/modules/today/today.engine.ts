@@ -13,7 +13,13 @@ import type { MainGoal } from '../profile/profile.types'
 import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
 import type { FaceGuard } from '../face-guard/face-guard.types'
-import type { TodayDecision, TodayDecisionInput, TodayDecisionState } from './today.types'
+import type { Recommendation } from '../recommendations/recommendation.types'
+import type {
+  TodayDecision,
+  TodayDecisionCtaTarget,
+  TodayDecisionInput,
+  TodayDecisionState,
+} from './today.types'
 
 // ── State derivation ──────────────────────────────────────────────────────────
 
@@ -57,6 +63,7 @@ const UNAVAILABLE: TodayDecision = {
   title: 'Cargando tu información',
   explanation: 'Espera un momento mientras Bronze IQ reúne tus datos.',
   bestNextAction: 'Esperar',
+  bestNextActionTarget: 'history',
   reasons: [],
   disclaimer: DISCLAIMER,
   recommendationLevel: null,
@@ -79,18 +86,23 @@ const UNAVAILABLE: TodayDecision = {
 // ── mainGoal-aware CTA ────────────────────────────────────────────────────────
 
 /**
- * Adjusts the primary CTA label based on the user's stated goal.
- * Users who want to avoid overexposure see "Ver mi historial" in the ready
- * state — reinforcing that checking their history is the meaningful action,
- * not immediately adding more exposure.
+ * Resolves the primary CTA's label and navigation target together so they never
+ * contradict each other.
+ *
+ * The recommendation engine already carries the intent (register vs. history)
+ * for each level. Users whose goal is to avoid overexposure see "Ver mi
+ * historial" in the ready state — reinforcing that checking their history is the
+ * meaningful action, not immediately adding more exposure.
  */
-function resolveCtaLabel(
+function resolveCta(
   mainGoal: MainGoal,
-  defaultCta: string,
+  recommendation: Recommendation,
   state: TodayDecisionState
-): string {
-  if (state === 'ready' && mainGoal === 'avoid_overexposure') return 'Ver mi historial'
-  return defaultCta
+): { label: string; target: TodayDecisionCtaTarget } {
+  if (state === 'ready' && mainGoal === 'avoid_overexposure') {
+    return { label: 'Ver mi historial', target: 'history' }
+  }
+  return { label: recommendation.ctaLabel, target: recommendation.ctaAction }
 }
 
 // ── Location-needed copy ──────────────────────────────────────────────────────
@@ -218,13 +230,14 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
   const title = state === 'location_needed' ? LOCATION_COPY.title : recommendation.title
   const explanation =
     state === 'location_needed' ? LOCATION_COPY.explanation : recommendation.message
-  const bestNextAction = resolveCtaLabel(profile.mainGoal, recommendation.ctaLabel, state)
+  const cta = resolveCta(profile.mainGoal, recommendation, state)
 
   return {
     state,
     title,
     explanation,
-    bestNextAction,
+    bestNextAction: cta.label,
+    bestNextActionTarget: cta.target,
     reasons: recommendation.reasons,
     disclaimer: recommendation.disclaimer,
     recommendationLevel: recommendation.level,

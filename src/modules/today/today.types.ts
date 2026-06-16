@@ -22,6 +22,9 @@ export type TodayDecisionState =
   | 'location_needed' // No UV + location denied: conservative guidance only
   | 'unavailable' //     Profile missing or data still loading
 
+/** Where the primary CTA navigates, so the label and the action stay aligned. */
+export type TodayDecisionCtaTarget = 'register' | 'history'
+
 export type TodayDecision = {
   // ── Core decision ─────────────────────────────────────────────────────────────
   state: TodayDecisionState
@@ -31,6 +34,8 @@ export type TodayDecision = {
   explanation: string
   /** Label for the primary CTA button. */
   bestNextAction: string
+  /** Destination the primary CTA should route to (matches bestNextAction's intent). */
+  bestNextActionTarget: TodayDecisionCtaTarget
   /** Machine-readable reasons from the underlying modules. */
   reasons: string[]
   /** Legal disclaimer (passed through from the recommendation engine). */
