@@ -162,8 +162,17 @@ export default function HomeScreen() {
       uvPeakWindow: uvForecast?.peakWindow ?? null,
       streak: todayDecision.safetyStreak,
       hasActivePlan: todayDecision.hasActivePlan,
+      recoveryLevel: todayDecision.recoveryStatus.level,
+      faceGuardLevel: todayDecision.faceGuard.level,
     })
-  }, [scheduleNotifications, uvForecast, todayDecision.safetyStreak, todayDecision.hasActivePlan])
+  }, [
+    scheduleNotifications,
+    uvForecast,
+    todayDecision.safetyStreak,
+    todayDecision.hasActivePlan,
+    todayDecision.recoveryStatus.level,
+    todayDecision.faceGuard.level,
+  ])
 
   const isLoading =
     profileStatus === 'loading' || todayStatus === 'loading' || recentSessionsStatus === 'loading'

@@ -16,11 +16,12 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   sessionReminderHour: 10,
 }
 
-/** Maps a boolean preference key to the notification ID it controls. */
-const PREF_TO_NOTIFICATION_ID: Partial<Record<keyof NotificationPreferences, string>> = {
-  uvAlertsEnabled: 'uv-peak-alert',
-  sessionRemindersEnabled: 'session-reminder',
-  streakRemindersEnabled: 'streak-reminder',
+/** Maps a boolean preference key to all notification IDs it controls. */
+const PREF_TO_NOTIFICATION_IDS: Partial<Record<keyof NotificationPreferences, string[]>> = {
+  uvAlertsEnabled: ['uv-peak-alert'],
+  // session toggle controls both the plan reminder and the recovery check-in
+  sessionRemindersEnabled: ['session-reminder', 'recovery-check-in'],
+  streakRemindersEnabled: ['streak-reminder'],
 }
 
 type NotificationStore = {
@@ -71,12 +72,14 @@ export const useNotificationStore = create<NotificationStore>()(
 
       setPreference: (key, value) => {
         set((state) => ({ preferences: { ...state.preferences, [key]: value } }))
-        // When a boolean channel is disabled, immediately cancel its OS notification
-        // so it doesn't fire after the user has turned it off.
+        // When a boolean channel is disabled, immediately cancel its OS notifications
+        // so they don't fire after the user has turned them off.
         if (typeof value === 'boolean' && !value) {
-          const notificationId = PREF_TO_NOTIFICATION_ID[key as keyof NotificationPreferences]
-          if (notificationId !== undefined) {
-            void NotificationService.cancelNotification(notificationId)
+          const ids = PREF_TO_NOTIFICATION_IDS[key as keyof NotificationPreferences]
+          if (ids !== undefined) {
+            for (const id of ids) {
+              void NotificationService.cancelNotification(id)
+            }
           }
         }
       },

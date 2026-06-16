@@ -129,6 +129,13 @@ describe('useNotificationStore', () => {
     expect(mockCancelOne).toHaveBeenCalledWith('streak-reminder')
   })
 
+  it('cancels both session-reminder and recovery-check-in when sessionRemindersEnabled is toggled off', () => {
+    mockCancelOne.mockResolvedValue(undefined)
+    useNotificationStore.getState().setPreference('sessionRemindersEnabled', false)
+    expect(mockCancelOne).toHaveBeenCalledWith('session-reminder')
+    expect(mockCancelOne).toHaveBeenCalledWith('recovery-check-in')
+  })
+
   it('does not cancel any notification when toggling a channel on', () => {
     useNotificationStore.setState({
       preferences: {

@@ -12,35 +12,70 @@ const STREAK_REMINDER_HOUR = 17
  * Returns the set of notifications that should be scheduled right now,
  * given the current UV forecast, streak, plan state, and preferences.
  * Notifications whose trigger time has already passed are omitted.
+ *
+ * Recovery awareness: when recoveryLevel is 'recovery_recommended' or
+ * 'avoid_direct_exposure', the session reminder is suppressed and replaced
+ * by a recovery check-in reminder instead.
  */
 export function buildNotificationSpecs(input: ScheduleInput): NotificationSpec[] {
-  const { preferences, uvPeakWindow, streak, hasActivePlan, now = new Date() } = input
+  const {
+    preferences,
+    uvPeakWindow,
+    streak,
+    hasActivePlan,
+    recoveryLevel,
+    faceGuardLevel,
+    now = new Date(),
+  } = input
   const specs: NotificationSpec[] = []
+
+  const inActiveRecovery =
+    recoveryLevel === 'recovery_recommended' || recoveryLevel === 'avoid_direct_exposure'
+
+  // ── UV peak alert ─────────────────────────────────────────────────────────────
 
   if (preferences.uvAlertsEnabled && uvPeakWindow !== null) {
     const alertAt = uvPeakAlertTime(uvPeakWindow, now)
     if (alertAt !== null && alertAt > now) {
       const category = uvCategoryLabel(uvPeakWindow.maxUvIndex)
+      const faceNote =
+        faceGuardLevel === 'elevated' || faceGuardLevel === 'strong'
+          ? ' Añade protección en el rostro.'
+          : ''
       specs.push({
         id: 'uv-peak-alert',
         title: '☀️ Pico UV se acerca',
-        body: `El UV alcanzará nivel ${category} (${uvPeakWindow.maxUvIndex}) entre las ${uvPeakWindow.startHour}h y las ${uvPeakWindow.endHour}h. Usa protección solar.`,
+        body: `El UV alcanzará nivel ${category} (${uvPeakWindow.maxUvIndex}) entre las ${uvPeakWindow.startHour}h y las ${uvPeakWindow.endHour}h. Usa protección solar.${faceNote}`,
         fireAt: alertAt,
       })
     }
   }
 
-  if (preferences.sessionRemindersEnabled && hasActivePlan) {
+  // ── Session reminder or recovery check-in ────────────────────────────────────
+
+  if (preferences.sessionRemindersEnabled) {
     const fireAt = todayAtHour(preferences.sessionReminderHour, now)
     if (fireAt > now) {
-      specs.push({
-        id: 'session-reminder',
-        title: '🌅 Hoy toca sesión',
-        body: 'Tienes una sesión en tu plan para hoy. ¿Listo? Recuerda el protector solar.',
-        fireAt,
-      })
+      if (inActiveRecovery) {
+        // Replace session reminder with a rest-oriented check-in
+        specs.push({
+          id: 'recovery-check-in',
+          title: '🌤 Hoy toca descanso',
+          body: 'Tu piel registró una sesión intensa recientemente. Dale un respiro hoy.',
+          fireAt,
+        })
+      } else if (hasActivePlan) {
+        specs.push({
+          id: 'session-reminder',
+          title: '🌅 Hoy toca sesión',
+          body: 'Tienes una sesión en tu plan para hoy. ¿Listo? Recuerda el protector solar.',
+          fireAt,
+        })
+      }
     }
   }
+
+  // ── Streak reminder ───────────────────────────────────────────────────────────
 
   if (preferences.streakRemindersEnabled && streak > 0) {
     const fireAt = todayAtHour(STREAK_REMINDER_HOUR, now)
@@ -49,7 +84,7 @@ export function buildNotificationSpecs(input: ScheduleInput): NotificationSpec[]
       specs.push({
         id: 'streak-reminder',
         title: '🔥 ¡Protege tu racha!',
-        body: `Llevas ${days} sin incidencias. Hoy aún puedes mantenerla segura.`,
+        body: `Llevas ${days} sin incidencias. Hoy aún puedes conservarla.`,
         fireAt,
       })
     }
