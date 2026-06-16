@@ -1,26 +1,20 @@
 import { spfToProtectionLevel } from '../protection/protection.engine'
 import { classifyUv } from '../uv/uv.rules'
 import { protectionLevelSchema } from './session.schema'
+import { UV_BUCKETS } from './session.labels'
 import type { ProtectionLevel } from './session.types'
 import type { UvCategory } from '../uv/uv.types'
 
 /** Maximum duration the session form accepts, in minutes. */
 const MAX_DURATION_MINUTES = 300
 
-/**
- * Representative UV index for each WHO category. These values intentionally match
- * the Session Log form's UV_OPTIONS so a prefilled value always selects an option.
- * Thresholds live only in classifyUv — this map is just the bucket's display value.
- */
-const UV_CATEGORY_TO_FORM_VALUE: Record<UvCategory, number> = {
-  low: 1,
-  moderate: 4,
-  high: 6,
-  very_high: 9,
-  extreme: 11,
-}
+// Derived from the shared UV_BUCKETS source so the form options and this mapping
+// can never drift apart. Thresholds live only in classifyUv.
+const UV_CATEGORY_TO_FORM_VALUE = Object.fromEntries(
+  UV_BUCKETS.map((bucket) => [bucket.category, bucket.value])
+) as Record<UvCategory, number>
 
-const VALID_UV_FORM_VALUES = new Set<number>(Object.values(UV_CATEGORY_TO_FORM_VALUE))
+const VALID_UV_FORM_VALUES = new Set<number>(UV_BUCKETS.map((bucket) => bucket.value))
 
 /**
  * Maps a continuous live UV index to the form's bucket representative value,

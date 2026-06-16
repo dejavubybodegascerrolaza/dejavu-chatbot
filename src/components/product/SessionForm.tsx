@@ -15,7 +15,9 @@ import {
 import {
   CONTEXT_LABELS,
   PROTECTION_LABELS,
+  SENSATION_DESCRIPTIONS,
   SENSATION_LABELS,
+  UV_BUCKETS,
 } from '@/modules/sessions/session.labels'
 import type { CreateExposureSessionInput } from '@/modules/sessions/session.schema'
 import type { SessionLogPrefill } from '@/modules/sessions/session.prefill'
@@ -62,15 +64,14 @@ const PROTECTION_OPTIONS = (Object.keys(PROTECTION_LABELS) as ProtectionLevel[])
 const SENSATION_OPTIONS = (Object.keys(SENSATION_LABELS) as SensationAfter[]).map((value) => ({
   value,
   label: SENSATION_LABELS[value],
+  description: SENSATION_DESCRIPTIONS[value],
 }))
 
+// Derived from the shared UV_BUCKETS source (single source of truth with the
+// live-session prefill mapping), plus the "not indicated" option.
 const UV_OPTIONS: Array<{ label: string; value: string }> = [
   { label: 'No indicado', value: '' },
-  { label: '0–2 Bajo', value: '1' },
-  { label: '3–5 Moderado', value: '4' },
-  { label: '6–7 Alto', value: '6' },
-  { label: '8–10 Muy alto', value: '9' },
-  { label: '11 Extremo', value: '11' },
+  ...UV_BUCKETS.map((bucket) => ({ label: bucket.label, value: String(bucket.value) })),
 ]
 
 function getTodayString(): string {
@@ -160,6 +161,40 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
           </AppText>
         </View>
       ) : null}
+
+      {/* Skin response — the most important signal, kept up top so it never
+          feels like an afterthought. It feeds Recovery, Plan and Today. */}
+      <FormSection
+        title="¿Cómo respondió tu piel?"
+        description="Esto ayuda a ajustar tus próximas recomendaciones. Si hubo rojez, calor o tirantez, Bronze IQ reducirá el margen."
+      >
+        <Controller
+          name="sensationAfter"
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <View style={styles.options}>
+              {SENSATION_OPTIONS.map((opt) => (
+                <ProfileOptionCard
+                  key={opt.value}
+                  label={opt.label}
+                  description={opt.description}
+                  selected={value === opt.value}
+                  onPress={() => onChange(opt.value)}
+                />
+              ))}
+              {errors.sensationAfter ? (
+                <AppText variant="caption" color="danger">
+                  {errors.sensationAfter.message}
+                </AppText>
+              ) : null}
+            </View>
+          )}
+        />
+        <AppText variant="caption" color="textMuted" style={styles.reassurance}>
+          No pasa nada por terminar antes o registrar molestias: es información útil. No es consejo
+          médico.
+        </AppText>
+      </FormSection>
 
       {/* Date */}
       <FormSection title="Fecha">
@@ -284,34 +319,6 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
         />
       </FormSection>
 
-      {/* Sensation */}
-      <FormSection
-        title="Sensación posterior"
-        description={isPrefilled ? 'Ahora registra cómo respondió tu piel.' : undefined}
-      >
-        <Controller
-          name="sensationAfter"
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View style={styles.options}>
-              {SENSATION_OPTIONS.map((opt) => (
-                <ProfileOptionCard
-                  key={opt.value}
-                  label={opt.label}
-                  selected={value === opt.value}
-                  onPress={() => onChange(opt.value)}
-                />
-              ))}
-              {errors.sensationAfter ? (
-                <AppText variant="caption" color="danger">
-                  {errors.sensationAfter.message}
-                </AppText>
-              ) : null}
-            </View>
-          )}
-        />
-      </FormSection>
-
       {/* Notes */}
       <FormSection title="Notas opcionales">
         <Controller
@@ -386,6 +393,10 @@ const styles = StyleSheet.create({
   },
   prefillBannerText: {
     lineHeight: 18,
+  },
+  reassurance: {
+    lineHeight: 18,
+    marginTop: spacing.xs,
   },
   notesInput: {
     minHeight: 80,
