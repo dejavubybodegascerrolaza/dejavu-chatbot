@@ -68,48 +68,42 @@ This is safe on a staging-only project; never do it on production.
 
 ## Step 4 — Create the E2E Test Account
 
-In _SQL Editor_, run:
+Create the auth user via the dashboard (there is no `auth.create_user` SQL function):
+
+_Authentication → Users → **Add user**_ → enter the test email + password →
+check **Auto Confirm User** → create.
+
+Then seed the profile, mark onboarding complete, and (for the recovery flow)
+create an active plan. The full, schema-correct, idempotent seed lives in its
+own guide:
+
+➡️ **See [`e2e-staging-seed.md`](./e2e-staging-seed.md)** for the exact SQL that:
+
+- upserts the `profiles` row with `onboarding_completed = true`
+- upserts an active `tanning_plans` row (enables `plan-status-paused_recovery`)
+- optionally clears the test user's `exposure_sessions`
+- verifies the resulting state
+
+A minimal onboarding-only seed (no plan) is:
 
 ```sql
--- Creates a confirmed user directly (bypasses email flow)
--- Replace the email/password with your own staging test credentials
-select auth.create_user(
-  '{"email": "e2e@bronzeiq.test", "password": "YourStagingPassword!", "email_confirm": true}'::jsonb
-);
-```
-
-Then complete that account's onboarding so the auth guard routes to Home (not the onboarding wizard).
-Seed `profiles` directly:
-
-```sql
--- Get the user's UUID first:
-select id from auth.users where email = 'e2e@bronzeiq.test';
-
--- Then insert a completed profile (replace <user-uuid>):
-insert into profiles (
-  id,
-  alias,
-  fitzpatrick_type,
-  age_range,
-  main_goal,
-  sun_sensitivity,
-  consent_given_at,
-  consent_version,
-  onboarding_completed_at
-) values (
-  '<user-uuid>',
-  'E2ETest',
-  2,
-  '26-35',
-  'avoid_overexposure',
-  3,
-  now(),
-  'v1.0',
-  now()
-);
-
-insert into consent_log (user_id, event, consent_version)
-values ('<user-uuid>', 'consent_given', 'v1.0');
+-- profiles uses: alias, main_goal, sun_sensitivity, skin_type,
+-- onboarding_completed (bool), disclaimer_accepted_at. Keyed on the user's
+-- email so only the email is a placeholder.
+insert into public.profiles (
+  id, alias, main_goal, sun_sensitivity, skin_type,
+  onboarding_completed, disclaimer_accepted_at
+)
+select u.id, 'E2ETest', 'avoid_overexposure', 'medium', 2, true, now()
+from auth.users u
+where u.email = 'e2e@bronzeiq.test'
+on conflict (id) do update set
+  alias = excluded.alias,
+  main_goal = excluded.main_goal,
+  sun_sensitivity = excluded.sun_sensitivity,
+  skin_type = excluded.skin_type,
+  onboarding_completed = true,
+  disclaimer_accepted_at = coalesce(public.profiles.disclaimer_accepted_at, now());
 ```
 
 ---
