@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
-import { router } from 'expo-router'
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
+import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button, Card } from '@/components/ui'
 import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
@@ -23,6 +23,8 @@ import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
 import { SENSATION_LABELS } from '@/modules/sessions/session.labels'
+import { parseSessionSaveAcknowledgement } from '@/modules/sessions/session.acknowledgement'
+import type { SaveAckTone } from '@/modules/sessions/session.acknowledgement'
 import { useUvStore } from '@/modules/uv'
 import { useLocationStore } from '@/modules/location'
 import { usePlanStore } from '@/modules/plan'
@@ -32,6 +34,20 @@ import { useNotificationStore } from '@/modules/notifications/notifications.stor
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10)
+}
+
+const ACK_TONE_BG: Record<SaveAckTone, string> = {
+  positive: colors.successSoft,
+  caution: colors.warningSoft,
+  recovery: colors.warningSoft,
+  avoid: colors.dangerSoft,
+}
+
+const ACK_TONE_TEXT: Record<SaveAckTone, 'success' | 'warning' | 'danger'> = {
+  positive: 'success',
+  caution: 'warning',
+  recovery: 'warning',
+  avoid: 'danger',
 }
 
 export default function HomeScreen() {
@@ -200,6 +216,16 @@ export default function HomeScreen() {
     todayDecision.recoveryStatus.level === 'recovery_recommended' ||
     todayDecision.recoveryStatus.level === 'avoid_direct_exposure'
 
+  // Post-save acknowledgement, carried from Session Log via a route param.
+  // Parsed in a pure helper so invalid/missing values are ignored safely.
+  const savedParam = useLocalSearchParams<{ saved?: string }>().saved
+  const savedKey = typeof savedParam === 'string' ? savedParam : null
+  const acknowledgement = useMemo(() => parseSessionSaveAcknowledgement(savedParam), [savedParam])
+  const [dismissedAckKey, setDismissedAckKey] = useState<string | null>(null)
+  const showAcknowledgement = acknowledgement !== null && savedKey !== dismissedAckKey
+  // When deeper recovery guidance is already on screen, keep the ack transactional.
+  const ackCompact = todayDecision.recoveryStatus.level !== 'none'
+
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRetry = () => {
@@ -273,6 +299,36 @@ export default function HomeScreen() {
             Esto es lo que Bronze IQ sugiere hoy.
           </AppText>
         </View>
+
+        {/* Post-save acknowledgement — brief, dismissible, varies by skin response.
+            Compact when RecoveryGuidanceCard already carries the deeper guidance. */}
+        {showAcknowledgement && acknowledgement !== null ? (
+          <View
+            style={[styles.ackBanner, { backgroundColor: ACK_TONE_BG[acknowledgement.tone] }]}
+            accessibilityRole="summary"
+          >
+            <View style={styles.ackTextGroup}>
+              <AppText variant="bodyStrong" color={ACK_TONE_TEXT[acknowledgement.tone]}>
+                {acknowledgement.title}
+              </AppText>
+              {!ackCompact ? (
+                <AppText variant="caption" color="textSecondary" style={styles.ackMessage}>
+                  {acknowledgement.message}
+                </AppText>
+              ) : null}
+            </View>
+            <Pressable
+              onPress={() => setDismissedAckKey(savedKey)}
+              accessibilityRole="button"
+              accessibilityLabel="Descartar confirmación"
+              hitSlop={8}
+            >
+              <AppText variant="caption" color="textMuted">
+                Entendido
+              </AppText>
+            </Pressable>
+          </View>
+        ) : null}
 
         {/* Today Decision — primary card */}
         {todayDecision.recommendationLevel !== null ? (
@@ -455,6 +511,21 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: spacing.xs,
+  },
+  ackBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    borderRadius: 12,
+    padding: spacing.md,
+  },
+  ackTextGroup: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  ackMessage: {
+    lineHeight: 18,
   },
   uvUnavailableText: {
     marginTop: spacing.xs,

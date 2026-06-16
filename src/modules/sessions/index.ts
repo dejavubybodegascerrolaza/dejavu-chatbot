@@ -1,6 +1,7 @@
 export * from './session.types'
 export * from './session.schema'
 export * from './session.prefill'
+export * from './session.acknowledgement'
 export * from './session.mapper'
 export * from './session.repository'
 export * from './session.service'
