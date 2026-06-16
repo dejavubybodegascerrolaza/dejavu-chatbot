@@ -10,6 +10,10 @@ import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { useSessionStore } from '@/modules/sessions/session.store'
 import { buildRecoveryStatus } from '@/modules/recovery'
+import {
+  buildLiveSessionPrefill,
+  toSessionLogPrefillParams,
+} from '@/modules/sessions/session.prefill'
 import { classifyUv } from '@/modules/uv/uv.rules'
 import { useUvStore } from '@/modules/uv'
 import {
@@ -117,7 +121,11 @@ export default function LiveSessionScreen() {
 
   const handleFinish = () => {
     setIsRunning(false)
-    router.push('/(app)/session-log')
+    const prefill = buildLiveSessionPrefill({ elapsedSeconds, spf })
+    router.push({
+      pathname: '/(app)/session-log',
+      params: toSessionLogPrefillParams(prefill),
+    })
   }
 
   if (uvForecast === null) {

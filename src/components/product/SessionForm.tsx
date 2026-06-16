@@ -18,6 +18,7 @@ import {
   SENSATION_LABELS,
 } from '@/modules/sessions/session.labels'
 import type { CreateExposureSessionInput } from '@/modules/sessions/session.schema'
+import type { SessionLogPrefill } from '@/modules/sessions/session.prefill'
 import type {
   ExposureContext,
   ProtectionLevel,
@@ -82,9 +83,16 @@ type Props = {
   onSave: (input: CreateExposureSessionInput) => Promise<void>
   onCancel: () => void
   isSubmitting: boolean
+  /** Known values carried from a finished live session. Applied only as initial
+   *  defaults — user edits are never overwritten once the form has loaded. */
+  prefill?: SessionLogPrefill
 }
 
-export function SessionForm({ onSave, onCancel, isSubmitting }: Props) {
+export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) {
+  const isPrefilled =
+    prefill !== undefined &&
+    (prefill.durationMinutes !== undefined || prefill.protectionLevel !== undefined)
+
   const {
     control,
     handleSubmit,
@@ -94,9 +102,9 @@ export function SessionForm({ onSave, onCancel, isSubmitting }: Props) {
     resolver: zodResolver(sessionFormSchema),
     defaultValues: {
       sessionDate: getTodayString(),
-      durationText: '',
+      durationText: prefill?.durationMinutes !== undefined ? String(prefill.durationMinutes) : '',
       uvIndexManualRaw: '',
-      protectionLevel: 'unknown',
+      protectionLevel: prefill?.protectionLevel ?? 'unknown',
       notes: '',
     },
   })
@@ -139,6 +147,18 @@ export function SessionForm({ onSave, onCancel, isSubmitting }: Props) {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
+      {isPrefilled ? (
+        <View style={styles.prefillBanner} accessibilityRole="summary">
+          <AppText variant="bodyStrong" color="brand">
+            Datos rellenados automáticamente
+          </AppText>
+          <AppText variant="caption" color="textSecondary" style={styles.prefillBannerText}>
+            Datos de la sesión rellenados automáticamente. Revisa y confirma. Puedes ajustar
+            cualquier dato antes de guardar.
+          </AppText>
+        </View>
+      ) : null}
+
       {/* Date */}
       <FormSection title="Fecha">
         <Controller
@@ -263,7 +283,10 @@ export function SessionForm({ onSave, onCancel, isSubmitting }: Props) {
       </FormSection>
 
       {/* Sensation */}
-      <FormSection title="Sensación posterior">
+      <FormSection
+        title="Sensación posterior"
+        description={isPrefilled ? 'Ahora registra cómo respondió tu piel.' : undefined}
+      >
         <Controller
           name="sensationAfter"
           control={control}
@@ -352,6 +375,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: spacing.sm,
     marginTop: spacing.xs,
+  },
+  prefillBanner: {
+    backgroundColor: colors.brandSoft,
+    borderRadius: 8,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  prefillBannerText: {
+    lineHeight: 18,
   },
   notesInput: {
     minHeight: 80,
