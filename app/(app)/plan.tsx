@@ -44,9 +44,13 @@ export default function PlanScreen() {
 
   const today = getTodayISODate()
 
+  const recoveryStatus = useMemo(
+    () => buildRecoveryStatus({ recentSessions, today }),
+    [recentSessions, today]
+  )
+
   const plan = useMemo(() => {
     if (goalLevel === null) return null
-    const recoveryStatus = buildRecoveryStatus({ recentSessions, today })
     const hasRecentOverexposure =
       recoveryStatus.level === 'recovery_recommended' ||
       recoveryStatus.level === 'avoid_direct_exposure'
@@ -57,11 +61,10 @@ export default function PlanScreen() {
       hasRecentOverexposure,
       ...(currentUv !== null ? { typicalUvIndex: currentUv } : {}),
     })
-  }, [skinType, currentLevel, goalLevel, currentUv, recentSessions, today])
+  }, [skinType, currentLevel, goalLevel, currentUv, recoveryStatus])
 
   const adherence = useMemo(() => {
     if (plan === null || startDate === null) return null
-    const recoveryStatus = buildRecoveryStatus({ recentSessions, today })
     return buildPlanAdherence({
       plan,
       planStartDate: startDate,
@@ -69,7 +72,7 @@ export default function PlanScreen() {
       recoveryStatus,
       today,
     })
-  }, [plan, startDate, historySessions, recentSessions, today])
+  }, [plan, startDate, historySessions, recoveryStatus, today])
 
   // At-a-glance plan state — pure mapping from existing plan + adherence outputs.
   const planStatus = resolvePlanStatus(plan, adherence)

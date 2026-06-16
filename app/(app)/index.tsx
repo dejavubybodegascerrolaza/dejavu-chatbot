@@ -119,16 +119,19 @@ export default function HomeScreen() {
       if (!cancelled && coords) {
         await loadForecast(coords)
       }
-      // Ask for notification permission after location (non-blocking)
-      if (!cancelled && notificationPermission === 'unknown') {
-        await requestNotificationPermission()
-      }
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [requestLocation, loadForecast, notificationPermission, requestNotificationPermission])
+  }, [requestLocation, loadForecast])
+
+  // Notification permission — asked once, separately, so it never re-triggers
+  // the location/UV effect when the permission status changes from unknown.
+  useEffect(() => {
+    if (notificationPermission !== 'unknown') return
+    void requestNotificationPermission()
+  }, [notificationPermission, requestNotificationPermission])
 
   const todayDecision = useMemo(
     () =>
