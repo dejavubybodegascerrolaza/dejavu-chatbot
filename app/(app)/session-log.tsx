@@ -15,7 +15,11 @@ export default function SessionLogScreen() {
 
   // Prefill carried from a finished live session via route params. Parsed in the
   // pure helper so malformed params are ignored safely and the logic stays tested.
-  const params = useLocalSearchParams<{ durationMinutes?: string; protectionLevel?: string }>()
+  const params = useLocalSearchParams<{
+    durationMinutes?: string
+    protectionLevel?: string
+    uvIndexManual?: string
+  }>()
   const prefill = useMemo(() => parseSessionLogPrefillParams(params), [params])
 
   const handleSave = async (input: CreateExposureSessionInput) => {

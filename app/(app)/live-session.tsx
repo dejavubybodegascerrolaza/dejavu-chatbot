@@ -121,7 +121,7 @@ export default function LiveSessionScreen() {
 
   const handleFinish = () => {
     setIsRunning(false)
-    const prefill = buildLiveSessionPrefill({ elapsedSeconds, spf })
+    const prefill = buildLiveSessionPrefill({ elapsedSeconds, spf, uvIndex })
     router.push({
       pathname: '/(app)/session-log',
       params: toSessionLogPrefillParams(prefill),

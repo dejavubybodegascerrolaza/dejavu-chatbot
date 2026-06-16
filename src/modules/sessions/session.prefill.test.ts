@@ -2,6 +2,7 @@ import {
   buildLiveSessionPrefill,
   parseSessionLogPrefillParams,
   toSessionLogPrefillParams,
+  uvIndexToFormValue,
 } from './session.prefill'
 
 // ── buildLiveSessionPrefill ─────────────────────────────────────────────────────
@@ -55,17 +56,97 @@ describe('buildLiveSessionPrefill', () => {
     expect(prefill).not.toHaveProperty('notes')
     expect(prefill).not.toHaveProperty('context')
   })
+
+  it('omits UV when no uvIndex is provided', () => {
+    expect(buildLiveSessionPrefill({ elapsedSeconds: 600, spf: 1 }).uvIndexManual).toBeUndefined()
+  })
+
+  it('omits UV when uvIndex is null', () => {
+    expect(
+      buildLiveSessionPrefill({ elapsedSeconds: 600, spf: 1, uvIndex: null }).uvIndexManual
+    ).toBeUndefined()
+  })
+
+  it('omits UV for a negative (invalid) uvIndex', () => {
+    expect(
+      buildLiveSessionPrefill({ elapsedSeconds: 600, spf: 1, uvIndex: -3 }).uvIndexManual
+    ).toBeUndefined()
+  })
+
+  it('buckets a known live UV index into the form value', () => {
+    expect(buildLiveSessionPrefill({ elapsedSeconds: 600, spf: 1, uvIndex: 7 }).uvIndexManual).toBe(
+      6
+    )
+  })
+
+  it('includes uvIndexManual alongside duration and protection when UV is known', () => {
+    const prefill = buildLiveSessionPrefill({ elapsedSeconds: 1800, spf: 30, uvIndex: 9 })
+    expect(Object.keys(prefill).sort()).toEqual([
+      'durationMinutes',
+      'protectionLevel',
+      'uvIndexManual',
+    ])
+  })
+})
+
+// ── uvIndexToFormValue ──────────────────────────────────────────────────────────
+
+describe('uvIndexToFormValue', () => {
+  it('maps low UV (0–2) to 1', () => {
+    expect(uvIndexToFormValue(0)).toBe(1)
+    expect(uvIndexToFormValue(2.9)).toBe(1)
+  })
+
+  it('maps moderate UV (3–5) to 4', () => {
+    expect(uvIndexToFormValue(3)).toBe(4)
+    expect(uvIndexToFormValue(5.9)).toBe(4)
+  })
+
+  it('maps high UV (6–7) to 6', () => {
+    expect(uvIndexToFormValue(6)).toBe(6)
+    expect(uvIndexToFormValue(7.9)).toBe(6)
+  })
+
+  it('maps very_high UV (8–10) to 9', () => {
+    expect(uvIndexToFormValue(8)).toBe(9)
+    expect(uvIndexToFormValue(10.9)).toBe(9)
+  })
+
+  it('maps extreme UV (11+) to 11', () => {
+    expect(uvIndexToFormValue(11)).toBe(11)
+    expect(uvIndexToFormValue(15)).toBe(11)
+  })
 })
 
 // ── parseSessionLogPrefillParams ────────────────────────────────────────────────
 
 describe('parseSessionLogPrefillParams', () => {
-  it('parses valid duration and protection params', () => {
+  it('parses valid duration, protection and UV params', () => {
     const result = parseSessionLogPrefillParams({
       durationMinutes: '45',
       protectionLevel: 'medium',
+      uvIndexManual: '6',
     })
-    expect(result).toEqual({ durationMinutes: 45, protectionLevel: 'medium' })
+    expect(result).toEqual({ durationMinutes: 45, protectionLevel: 'medium', uvIndexManual: 6 })
+  })
+
+  it('accepts each valid UV form value', () => {
+    for (const v of [1, 4, 6, 9, 11]) {
+      expect(parseSessionLogPrefillParams({ uvIndexManual: String(v) }).uvIndexManual).toBe(v)
+    }
+  })
+
+  it('ignores a UV value that is not a form bucket representative', () => {
+    expect(parseSessionLogPrefillParams({ uvIndexManual: '7' }).uvIndexManual).toBeUndefined()
+    expect(parseSessionLogPrefillParams({ uvIndexManual: '0' }).uvIndexManual).toBeUndefined()
+  })
+
+  it('ignores a non-numeric UV value', () => {
+    expect(parseSessionLogPrefillParams({ uvIndexManual: 'abc' }).uvIndexManual).toBeUndefined()
+  })
+
+  it('ignores a missing UV value', () => {
+    expect(parseSessionLogPrefillParams({ durationMinutes: '30' }).uvIndexManual).toBeUndefined()
   })
 
   it('returns an empty object for empty params', () => {
@@ -117,6 +198,13 @@ describe('toSessionLogPrefillParams round-trip', () => {
   it('serializes and re-parses to the same prefill', () => {
     const prefill = buildLiveSessionPrefill({ elapsedSeconds: 2700, spf: 50 })
     const params = toSessionLogPrefillParams(prefill)
+    expect(parseSessionLogPrefillParams(params)).toEqual(prefill)
+  })
+
+  it('round-trips UV only when a valid live UV index is known', () => {
+    const prefill = buildLiveSessionPrefill({ elapsedSeconds: 2700, spf: 50, uvIndex: 9 })
+    const params = toSessionLogPrefillParams(prefill)
+    expect(params.uvIndexManual).toBe('9')
     expect(parseSessionLogPrefillParams(params)).toEqual(prefill)
   })
 

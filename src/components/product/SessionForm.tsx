@@ -91,7 +91,9 @@ type Props = {
 export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) {
   const isPrefilled =
     prefill !== undefined &&
-    (prefill.durationMinutes !== undefined || prefill.protectionLevel !== undefined)
+    (prefill.durationMinutes !== undefined ||
+      prefill.protectionLevel !== undefined ||
+      prefill.uvIndexManual !== undefined)
 
   const {
     control,
@@ -103,7 +105,7 @@ export function SessionForm({ onSave, onCancel, isSubmitting, prefill }: Props) 
     defaultValues: {
       sessionDate: getTodayString(),
       durationText: prefill?.durationMinutes !== undefined ? String(prefill.durationMinutes) : '',
-      uvIndexManualRaw: '',
+      uvIndexManualRaw: prefill?.uvIndexManual !== undefined ? String(prefill.uvIndexManual) : '',
       protectionLevel: prefill?.protectionLevel ?? 'unknown',
       notes: '',
     },

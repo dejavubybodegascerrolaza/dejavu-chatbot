@@ -1,9 +1,34 @@
 import { spfToProtectionLevel } from '../protection/protection.engine'
+import { classifyUv } from '../uv/uv.rules'
 import { protectionLevelSchema } from './session.schema'
 import type { ProtectionLevel } from './session.types'
+import type { UvCategory } from '../uv/uv.types'
 
 /** Maximum duration the session form accepts, in minutes. */
 const MAX_DURATION_MINUTES = 300
+
+/**
+ * Representative UV index for each WHO category. These values intentionally match
+ * the Session Log form's UV_OPTIONS so a prefilled value always selects an option.
+ * Thresholds live only in classifyUv — this map is just the bucket's display value.
+ */
+const UV_CATEGORY_TO_FORM_VALUE: Record<UvCategory, number> = {
+  low: 1,
+  moderate: 4,
+  high: 6,
+  very_high: 9,
+  extreme: 11,
+}
+
+const VALID_UV_FORM_VALUES = new Set<number>(Object.values(UV_CATEGORY_TO_FORM_VALUE))
+
+/**
+ * Maps a continuous live UV index to the form's bucket representative value,
+ * reusing the shared WHO classifier so thresholds are never duplicated.
+ */
+export function uvIndexToFormValue(uvIndex: number): number {
+  return UV_CATEGORY_TO_FORM_VALUE[classifyUv(uvIndex)]
+}
 
 /**
  * Values that can be safely carried from a finished live session into the
@@ -18,6 +43,8 @@ export type SessionLogPrefill = {
   durationMinutes?: number
   /** Protection level inferred from the SPF chosen during the live session. */
   protectionLevel?: ProtectionLevel
+  /** UV index bucketed to a form option value, from the known live UV index. */
+  uvIndexManual?: number
 }
 
 export type LiveSessionPrefillInput = {
@@ -25,6 +52,8 @@ export type LiveSessionPrefillInput = {
   elapsedSeconds: number
   /** SPF preset selected during the live session (1 = none). */
   spf: number
+  /** Live UV index during the session, when known. */
+  uvIndex?: number | null
 }
 
 /**
@@ -44,6 +73,13 @@ export function buildLiveSessionPrefill(input: LiveSessionPrefillInput): Session
 
   // SPF is always known in the live session (the preset selector defaults to 1).
   prefill.protectionLevel = spfToProtectionLevel(input.spf)
+
+  // UV is bucketed to a form option when a valid (non-negative) reading is known.
+  if (input.uvIndex !== undefined && input.uvIndex !== null && Number.isFinite(input.uvIndex)) {
+    if (input.uvIndex >= 0) {
+      prefill.uvIndexManual = uvIndexToFormValue(input.uvIndex)
+    }
+  }
 
   return prefill
 }
@@ -74,6 +110,16 @@ export function parseSessionLogPrefillParams(
     }
   }
 
+  const uv = firstParam(params.uvIndexManual)
+  if (uv !== null) {
+    const n = Number.parseInt(uv, 10)
+    // Only accept values that map to a real form option, so a prefilled value is
+    // always visible and selectable — never a hidden, unconfirmed UV reading.
+    if (Number.isInteger(n) && VALID_UV_FORM_VALUES.has(n)) {
+      prefill.uvIndexManual = n
+    }
+  }
+
   return prefill
 }
 
@@ -88,6 +134,9 @@ export function toSessionLogPrefillParams(prefill: SessionLogPrefill): Record<st
   }
   if (prefill.protectionLevel !== undefined) {
     params.protectionLevel = prefill.protectionLevel
+  }
+  if (prefill.uvIndexManual !== undefined) {
+    params.uvIndexManual = String(prefill.uvIndexManual)
   }
   return params
 }
