@@ -34,6 +34,7 @@ export default function PlanScreen() {
   const goalLevel = usePlanStore((s) => s.goalLevel)
   const currentLevel = usePlanStore((s) => s.currentLevel)
   const startDate = usePlanStore((s) => s.startDate)
+  const planStoreError = usePlanStore((s) => s.error)
   const setGoal = usePlanStore((s) => s.setGoal)
 
   const currentUv = useUvStore((s) => s.forecast?.maxToday ?? null)
@@ -84,6 +85,14 @@ export default function PlanScreen() {
         showsVerticalScrollIndicator={false}
       >
         {showStatusCard ? <PlanStatusCard summary={planStatus} /> : null}
+
+        {planStoreError !== null ? (
+          <View style={styles.errorBanner} accessibilityRole="alert">
+            <AppText variant="caption" color="danger">
+              {planStoreError}
+            </AppText>
+          </View>
+        ) : null}
 
         <AppText variant="body" color="textSecondary">
           Elige tu objetivo de tono. Bronze IQ estima el número de sesiones y el tiempo orientativo
@@ -303,5 +312,10 @@ const styles = StyleSheet.create({
   adjustText: {
     flex: 1,
     lineHeight: 18,
+  },
+  errorBanner: {
+    backgroundColor: colors.dangerSoft,
+    borderRadius: 8,
+    padding: spacing.md,
   },
 })

@@ -47,8 +47,8 @@ export default function SessionLogScreen() {
       </View>
 
       {error ? (
-        <View style={styles.errorBanner}>
-          <AppText variant="caption" color="danger">
+        <View style={styles.errorBanner} accessibilityRole="alert">
+          <AppText variant="body" color="danger">
             {error}
           </AppText>
         </View>
