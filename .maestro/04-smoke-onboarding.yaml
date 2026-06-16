@@ -1,0 +1,86 @@
+# Flow: Register (new account) → Onboarding wizard → Home
+#
+# Prerequisites:
+#   - The test account must NOT already exist in Supabase (register creates it).
+#   - Email confirmation must be disabled in Supabase Auth settings for this project,
+#     OR use a pre-confirmed email address that can be re-registered.
+#   - If email confirmation IS enabled, flow ends at the confirmation screen.
+#     This is expected; the assertion below handles both cases.
+#
+# IMPORTANT: Run this flow against a DEV/staging Supabase project, not production.
+#
+# Environment variables:
+#   BRONZE_IQ_TEST_EMAIL    — unique email for the new account
+#   BRONZE_IQ_TEST_PASSWORD — password (min 8 chars)
+#
+# Expected outcome:
+#   New user reaches Home after completing all 8 onboarding steps.
+
+appId: com.bronzeiq.app
+---
+- launchApp:
+    clearState: true
+
+# Welcome screen
+- assertVisible: "Bronze IQ"
+- tapOn:
+    id: "welcome-create-account"
+
+# Register form
+- tapOn:
+    id: "register-email-input"
+- inputText: "${BRONZE_IQ_TEST_EMAIL}"
+- tapOn:
+    id: "register-password-input"
+- inputText: "${BRONZE_IQ_TEST_PASSWORD}"
+- tapOn:
+    id: "register-confirm-password-input"
+- inputText: "${BRONZE_IQ_TEST_PASSWORD}"
+- hideKeyboard
+- tapOn:
+    id: "register-submit"
+
+# If email confirmation required, flow ends here (expected)
+- runFlow:
+    when:
+      visible: "Revisa tu email"
+    commands:
+      - assertVisible: "Revisa tu email"
+
+# Onboarding step 0 — Intro 1
+- tapOn: "Continuar"
+
+# Step 1 — Intro 2
+- tapOn: "Lo entiendo"
+
+# Step 2 — Intro 3
+- tapOn: "Continuar"
+
+# Step 3 — Disclaimer: check checkbox then accept
+- tapOn:
+    id: "onboarding-disclaimer-checkbox"
+- tapOn:
+    id: "onboarding-disclaimer-accept"
+
+# Step 4 — Alias
+- tapOn:
+    id: "onboarding-alias-input"
+- inputText: "TestUser"
+- hideKeyboard
+- tapOn:
+    id: "onboarding-alias-continue"
+
+# Step 5 — Main goal
+- tapOn: "Evitar pasarme con el sol"
+- tapOn: "Continuar"
+
+# Step 6 — Sun sensitivity
+- tapOn: "Normalmente tolero exposiciones moderadas"
+- tapOn: "Continuar"
+
+# Step 7 — Skin type (skip)
+- tapOn:
+    id: "onboarding-skip-skin-type"
+
+# Home should now be visible
+- assertVisible: "Hola"

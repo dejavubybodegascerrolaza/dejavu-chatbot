@@ -58,6 +58,7 @@ export default function LoginScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.email?.message}
+                testID="login-email-input"
               />
             )}
           />
@@ -73,6 +74,7 @@ export default function LoginScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.password?.message}
+                testID="login-password-input"
               />
             )}
           />
@@ -87,6 +89,7 @@ export default function LoginScreen() {
             loading={isSubmitting}
             onPress={() => void handleSubmit(onSubmit)()}
             accessibilityLabel="Iniciar sesión"
+            testID="login-submit"
           />
           <Button
             label="Crear cuenta"

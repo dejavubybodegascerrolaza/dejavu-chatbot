@@ -98,6 +98,7 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.email?.message}
+                testID="register-email-input"
               />
             )}
           />
@@ -113,6 +114,7 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.password?.message}
+                testID="register-password-input"
               />
             )}
           />
@@ -128,6 +130,7 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.confirmPassword?.message}
+                testID="register-confirm-password-input"
               />
             )}
           />
@@ -142,6 +145,7 @@ export default function RegisterScreen() {
             loading={isSubmitting}
             onPress={() => void handleSubmit(onSubmit)()}
             accessibilityLabel="Crear cuenta nueva"
+            testID="register-submit"
           />
           <Button
             label="Ya tengo cuenta"

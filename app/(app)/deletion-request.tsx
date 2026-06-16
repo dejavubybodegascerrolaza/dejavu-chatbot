@@ -92,6 +92,7 @@ export default function DeletionRequestScreen() {
             loading={isSubmitting}
             onPress={handleRequest}
             accessibilityLabel="Solicitar eliminación de mis datos"
+            testID="deletion-request-submit"
           />
           <Button
             label="Volver"

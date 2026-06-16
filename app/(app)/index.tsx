@@ -450,6 +450,7 @@ export default function HomeScreen() {
           fullWidth
           onPress={() => router.push('/(app)/live-session')}
           accessibilityLabel="Iniciar una sesión de exposición en directo"
+          testID="home-live-session-button"
         />
 
         {/* Compact secondary navigation — logout lives in Settings */}

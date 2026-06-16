@@ -31,6 +31,7 @@ export default function WelcomeScreen() {
             fullWidth
             onPress={() => router.push('/(auth)/register')}
             accessibilityLabel="Crear cuenta nueva en Bronze IQ"
+            testID="welcome-create-account"
           />
           <Button
             label="Ya tengo cuenta"
@@ -39,6 +40,7 @@ export default function WelcomeScreen() {
             fullWidth
             onPress={() => router.push('/(auth)/login')}
             accessibilityLabel="Iniciar sesión con cuenta existente"
+            testID="welcome-login"
           />
         </View>
       </View>

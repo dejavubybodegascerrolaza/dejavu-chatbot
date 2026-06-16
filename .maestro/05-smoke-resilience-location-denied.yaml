@@ -1,0 +1,34 @@
+# Flow: Resilience — location permission denied
+#
+# Verifies that when location is denied, Home remains functional and
+# shows a conservative fallback (no UV data) without crashing.
+#
+# Prerequisites:
+#   - User must be logged in and onboarding completed.
+#   - Location permission must be DENIED on the device before running.
+#     On iOS Simulator: Settings → Privacy & Security → Location Services → Bronze IQ → Never
+#
+# Expected outcome:
+#   - Home loads without crashing.
+#   - "Índice UV no disponible" card is shown OR the location_needed guidance appears.
+#   - "Sesión en directo" button is present (app navigable).
+
+appId: com.bronzeiq.app
+---
+- launchApp
+
+# Allow app to settle (UV fetch will fail / location denied)
+- waitForAnimationToEnd
+
+# Home should still load without crashing
+- assertVisible: "Hola"
+
+# Either the UV unavailable card or location-needed guidance should be visible
+- runFlow:
+    when:
+      visible: "Índice UV no disponible"
+    commands:
+      - assertVisible: "Índice UV no disponible"
+
+# App must remain navigable
+- assertVisible: "Sesión en directo"

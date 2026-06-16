@@ -295,6 +295,7 @@ export default function LiveSessionScreen() {
                 ? 'Empezar la sesión'
                 : 'Reanudar la sesión'
           }
+          testID="live-session-control"
         />
         <Button
           label="Finalizar y registrar"
@@ -303,6 +304,7 @@ export default function LiveSessionScreen() {
           fullWidth
           onPress={handleFinish}
           accessibilityLabel="Finalizar la sesión y registrar cómo respondió tu piel"
+          testID="live-session-finish"
         />
         <AppText variant="caption" color="textMuted" style={styles.endEarlyNote}>
           {LIVE_END_EARLY_NOTE}

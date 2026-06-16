@@ -1,0 +1,55 @@
+# Flow: Login → Home
+#
+# Prerequisites:
+#   - A test account must exist in the Supabase project (email + confirmed password).
+#   - The device/simulator must have Bronze IQ installed (dev or preview build).
+#   - Location permission will be requested on first launch — allow it for a full
+#     Home screen, or deny it to exercise the location-unavailable resilience path.
+#
+# Environment variables (set before running):
+#   BRONZE_IQ_TEST_EMAIL    — test account email
+#   BRONZE_IQ_TEST_PASSWORD — test account password
+#
+# How to run:
+#   maestro test .maestro/01-smoke-login-to-home.yaml \
+#     -e BRONZE_IQ_TEST_EMAIL=test@example.com \
+#     -e BRONZE_IQ_TEST_PASSWORD=testpassword123
+#
+# Expected outcome:
+#   Home screen is visible with the today-decision card or a loading state.
+
+appId: com.bronzeiq.app
+---
+- launchApp:
+    clearState: false
+
+# Should land on Welcome if not logged in
+- assertVisible: "Crear cuenta"
+
+# Navigate to Login
+- tapOn:
+    id: "welcome-login"
+
+# Enter credentials
+- tapOn:
+    id: "login-email-input"
+- inputText: "${BRONZE_IQ_TEST_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${BRONZE_IQ_TEST_PASSWORD}"
+- hideKeyboard
+
+# Submit
+- tapOn:
+    id: "login-submit"
+
+# Allow location prompt if it appears (iOS system dialog)
+- runFlow:
+    when:
+      visible: "Permitir"
+    commands:
+      - tapOn: "Permitir"
+
+# Home should be visible — check for a stable landmark
+- assertVisible: "Hola"
+- assertVisible: "Sesión en directo"

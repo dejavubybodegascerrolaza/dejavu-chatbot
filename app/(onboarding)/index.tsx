@@ -159,6 +159,7 @@ export default function OnboardingScreen() {
               accessibilityRole="checkbox"
               accessibilityState={{ checked: wizard.disclaimerAccepted }}
               accessibilityLabel="He leído y entiendo los límites de Bronze IQ"
+              testID="onboarding-disclaimer-checkbox"
             >
               <View
                 style={[
@@ -186,6 +187,7 @@ export default function OnboardingScreen() {
               disabled={!wizard.disclaimerAccepted}
               onPress={next}
               accessibilityLabel="Aceptar disclaimer y continuar"
+              testID="onboarding-disclaimer-accept"
             />
           </View>
         </View>
@@ -219,6 +221,7 @@ export default function OnboardingScreen() {
                 autoCapitalize="words"
                 autoCorrect={false}
                 maxLength={30}
+                testID="onboarding-alias-input"
               />
             </View>
           </View>
@@ -234,6 +237,7 @@ export default function OnboardingScreen() {
                 if (canAdvance) next()
               }}
               accessibilityLabel="Continuar con el alias introducido"
+              testID="onboarding-alias-continue"
             />
           </View>
         </View>
@@ -362,6 +366,7 @@ export default function OnboardingScreen() {
             loading={isSubmitting}
             onPress={() => void handleSave(wizard.skinType)}
             accessibilityLabel="Guardar perfil y continuar"
+            testID="onboarding-save-profile"
           />
           <Button
             label="No lo sé / Prefiero no indicarlo"
@@ -371,6 +376,7 @@ export default function OnboardingScreen() {
             disabled={isSubmitting}
             onPress={() => void handleSave(null)}
             accessibilityLabel="Continuar sin indicar fototipo"
+            testID="onboarding-skip-skin-type"
           />
         </View>
       </View>

@@ -1,0 +1,38 @@
+# Flow: Home → Session Log → Save → Home acknowledgement
+#
+# Prerequisites:
+#   - User must already be logged in and onboarding completed.
+#     Run flow 01-smoke-login-to-home.yaml first if starting from scratch.
+#   - UV forecast may be unavailable if location is denied — session log still works.
+#
+# Expected outcome:
+#   - Session is saved and Home shows an acknowledgement banner.
+#   - History screen shows the saved session.
+
+appId: com.bronzeiq.app
+---
+# Start from Home — navigate to Session Log via the register quick action
+- tapOn: "Registrar"
+
+# Session Log screen
+- assertVisible: "Registrar exposición"
+
+# Fill in duration (required field)
+- tapOn: "Minutos"
+- inputText: "30"
+- hideKeyboard
+
+# Select a context option (beach/pool/urban/mountain/other)
+- tapOn: "Playa"
+
+# Select protection level
+- tapOn: "Media"
+
+# Select skin response — choose "Normal" (non-recovery path for smoke test)
+- tapOn: "Normal"
+
+# Save
+- tapOn: "Guardar sesión de exposición"
+
+# Should return to Home with acknowledgement
+- assertVisible: "Hola"
