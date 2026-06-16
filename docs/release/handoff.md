@@ -24,24 +24,15 @@ backend de **staging** aislado.
   - Usuario de prueba `e2e@bronzeiq.test` creado y **confirmado**.
   - Seed aplicado: perfil (`onboarding_completed=true`) + plan activo
     (`goal_level=bronze`). Verificado.
+- **Variables en EAS (Expo) configuradas** vía web (Environment Variables,
+  entorno **Production**), apuntando al proyecto staging
+  `lrmyljxjevvpqxexhukb`:
+  - `EXPO_PUBLIC_SUPABASE_URL` = `https://lrmyljxjevvpqxexhukb.supabase.co`
+  - `EXPO_PUBLIC_SUPABASE_ANON_KEY` = anon/public key del proyecto staging
 
-## ⏳ Pendiente — siguiente acción inmediata
+> **Todo lo que no depende de Apple está HECHO.** Solo queda el Día D.
 
-**Paso 7 del runbook (variables en EAS).** Falta confirmar:
-
-```bash
-eas env:list --environment production
-```
-
-→ debe mostrar `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-(valores = Project URL + anon key del proyecto **staging**). Si no están, crearlas:
-
-```bash
-eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --environment production
-eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --environment production
-```
-
-## 🍏 Bloqueado por Apple (Día D)
+## 🍏 Bloqueado por Apple (Día D) — única acción pendiente
 
 Apple Developer pagado el 2026-06-15 (~24h); **comprobar activación** en
 developer.apple.com/account (Membership → Team activo). Cuando esté lista:
