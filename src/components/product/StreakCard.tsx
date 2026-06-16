@@ -24,7 +24,7 @@ export function StreakCard({ streak }: Props) {
           <AppText variant="caption" color="textMuted" style={styles.subtext}>
             {streak > 0
               ? 'Sigue así: descansar también cuenta.'
-              : 'Registra una sesión segura o descansa hoy.'}
+              : 'Anota tu exposición de hoy o tómate un descanso.'}
           </AppText>
         </View>
       </View>

@@ -18,11 +18,11 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     bundleIdentifier: BUNDLE_ID,
-    // infoPlist entries for permission usage descriptions (required by App Store review)
+    // infoPlist entries for permission usage descriptions (required by App Store review).
+    // Only declare permissions that are actually requested at runtime.
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         'Bronze IQ usa tu ubicación para mostrarte el índice UV real de tu zona.',
-      NSCameraUsageDescription: 'Bronze IQ no usa la cámara. Este permiso no está activo.',
     },
   },
   android: {
