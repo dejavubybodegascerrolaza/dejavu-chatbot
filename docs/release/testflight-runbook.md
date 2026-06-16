@@ -98,9 +98,12 @@ eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --environmen
 Pega como valores el **Project URL** y el **anon public key** del proyecto de
 **staging** (Settings → API en el dashboard de Supabase).
 
-> El perfil `production` de `eas.json` añade `EXPO_PUBLIC_APP_ENV=production`
-> automáticamente. **Nunca** pongas `SUPABASE_SERVICE_ROLE_KEY` en EAS ni en el
-> cliente.
+> El perfil `production` de `eas.json` está cableado a `"environment": "production"`,
+> así que las variables que crees con `--environment production` se inyectan en el
+> build automáticamente (y añade `EXPO_PUBLIC_APP_ENV=production`). La app solo
+> exige `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY` (validadas con
+> Zod al arrancar): si falta cualquiera, la app lanza error en el arranque.
+> **Nunca** pongas `SUPABASE_SERVICE_ROLE_KEY` en EAS ni en el cliente.
 
 Verifica que quedaron registradas:
 
