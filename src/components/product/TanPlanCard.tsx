@@ -4,8 +4,8 @@ import { AppText, Card } from '@/components/ui'
 import { colors, spacing } from '@/design'
 import { formatEtaDate, formatPlanDuration, TAN_LEVEL_LABELS } from '@/modules/plan'
 import type { TanPlanResult } from '@/modules/plan'
+import { resolvePlanStatus } from '@/modules/plan/plan.presentation'
 import { formatMinutes } from '@/modules/sun'
-import { ADHERENCE_STATUS_LABELS } from '@/modules/adherence'
 import type { PlanAdherence } from '@/modules/adherence'
 
 type Props = {
@@ -34,8 +34,10 @@ export function TanPlanCard({ plan, onPress, adherence }: Props) {
     )
   }
 
+  // Shared at-a-glance status — same wording as the Plan screen.
+  const status = resolvePlanStatus(plan, adherence ?? null)
   const goalReached = plan.status === 'goal_below_current'
-  const isPaused = plan.status === 'paused_recovery'
+  const isPaused = status.key === 'paused_recovery'
 
   // When slightly_behind: show adjusted ETA. Otherwise show original.
   const displayEta =
@@ -48,10 +50,10 @@ export function TanPlanCard({ plan, onPress, adherence }: Props) {
       ? 'ETA ajustada (orientativa):'
       : 'ETA orientativa:'
 
-  const adherenceLabel =
-    adherence != null && adherence.status !== 'unknown'
-      ? ADHERENCE_STATUS_LABELS[adherence.status]
-      : null
+  // Show the shared status title only when adherence is meaningful (matches the
+  // previous "only when known" behaviour); paused/goal states render their own copy.
+  const showStatusLine =
+    !goalReached && !isPaused && adherence != null && adherence.status !== 'unknown'
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ver mi plan">
@@ -74,9 +76,14 @@ export function TanPlanCard({ plan, onPress, adherence }: Props) {
             Ya has alcanzado este tono. ¡Elige una meta más intensa para seguir!
           </AppText>
         ) : isPaused ? (
-          <AppText variant="caption" color="textSecondary" style={styles.pausedNote}>
-            Plan pausado mientras tu piel se recupera. Retoma cuando te encuentres bien.
-          </AppText>
+          <>
+            <AppText variant="bodyStrong" color="warning">
+              {status.title}
+            </AppText>
+            <AppText variant="caption" color="textSecondary" style={styles.pausedNote}>
+              {status.detail}
+            </AppText>
+          </>
         ) : (
           <>
             <View style={styles.row}>
@@ -106,10 +113,10 @@ export function TanPlanCard({ plan, onPress, adherence }: Props) {
           </>
         )}
 
-        {/* Adherence status line — shows only when meaningful */}
-        {adherenceLabel !== null ? (
+        {/* Adherence status line — shared wording with the Plan screen */}
+        {showStatusLine ? (
           <AppText variant="caption" color="textMuted" style={styles.adherenceStatus}>
-            {adherenceLabel}
+            {status.title}
           </AppText>
         ) : null}
       </Card>

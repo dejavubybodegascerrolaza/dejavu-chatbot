@@ -4,6 +4,8 @@ import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { TanPlanCard } from './TanPlanCard'
 import type { TanPlanResult } from '@/modules/plan'
+import { resolvePlanStatus } from '@/modules/plan/plan.presentation'
+import type { PlanAdherence } from '@/modules/adherence'
 
 const PLAN: TanPlanResult = {
   status: 'ok',
@@ -38,5 +40,27 @@ describe('TanPlanCard', () => {
   it('shows a congratulatory message when the goal is already reached', () => {
     render(<TanPlanCard plan={{ ...PLAN, status: 'goal_below_current' }} onPress={() => {}} />)
     expect(screen.getByText(/Ya has alcanzado este tono/)).toBeTruthy()
+  })
+
+  it('uses the shared status title when adherence is meaningful', () => {
+    const adherence: PlanAdherence = {
+      status: 'slightly_behind',
+      completedSessions: 2,
+      expectedSessions: 4,
+      sessionDeficit: 2,
+      adjustedEtaDate: null,
+      summary: '',
+    }
+    const sharedTitle = resolvePlanStatus(PLAN, adherence).title
+    render(<TanPlanCard plan={PLAN} adherence={adherence} onPress={() => {}} />)
+    expect(screen.getByText(sharedTitle)).toBeTruthy()
+  })
+
+  it('expresses recovery pause with the shared status wording', () => {
+    const pausedPlan: TanPlanResult = { ...PLAN, status: 'paused_recovery' }
+    const shared = resolvePlanStatus(pausedPlan, null)
+    render(<TanPlanCard plan={pausedPlan} onPress={() => {}} />)
+    expect(screen.getByText(shared.title)).toBeTruthy()
+    expect(screen.getByText(shared.detail)).toBeTruthy()
   })
 })
