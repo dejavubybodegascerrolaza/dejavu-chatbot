@@ -282,7 +282,8 @@ export default function HomeScreen() {
   }
 
   const showUvUnavailable =
-    uvForecast === null && (uvStatus === 'error' || locationStatus === 'denied')
+    uvForecast === null &&
+    (uvStatus === 'error' || locationStatus === 'denied' || locationStatus === 'error')
 
   return (
     <SafeAreaView style={styles.safe}>
