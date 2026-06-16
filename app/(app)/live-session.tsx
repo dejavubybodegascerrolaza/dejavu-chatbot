@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -6,17 +6,30 @@ import { useKeepAwake } from 'expo-keep-awake'
 import * as Haptics from 'expo-haptics'
 import { AppText, Badge, Button, Card } from '@/components/ui'
 import { colors, radius, spacing } from '@/design'
+import { useAuthStore } from '@/modules/auth/auth.store'
 import { useProfileStore } from '@/modules/profile/profile.store'
+import { useSessionStore } from '@/modules/sessions/session.store'
+import { buildRecoveryStatus } from '@/modules/recovery'
+import { classifyUv } from '@/modules/uv/uv.rules'
 import { useUvStore } from '@/modules/uv'
 import {
   computeLiveSessionState,
   formatClock,
+  getLiveRecoveryNote,
+  getLiveUvWarning,
+  LIVE_DISCLAIMER_NOTE,
+  LIVE_DISCOMFORT_NOTE,
+  LIVE_END_EARLY_NOTE,
   LIVE_STATUS_LABELS,
   LIVE_STATUS_MESSAGES,
   LIVE_STATUS_TO_BADGE,
   SPF_PRESETS,
 } from '@/modules/live'
 import type { SpfPreset } from '@/modules/live'
+
+function getTodayString(): string {
+  return new Date().toISOString().slice(0, 10)
+}
 
 const SPF_LABELS: Record<SpfPreset, string> = {
   1: 'Sin protección',
@@ -35,6 +48,10 @@ export default function LiveSessionScreen() {
   const sunSensitivity = useProfileStore((s) => s.profile?.sunSensitivity ?? null)
   const uvForecast = useUvStore((s) => s.forecast)
 
+  const userId = useAuthStore((s) => s.user?.id)
+  const recentSessions = useSessionStore((s) => s.recentSessions)
+  const loadRecentSessions = useSessionStore((s) => s.loadRecentSessions)
+
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
   const [spf, setSpf] = useState<SpfPreset>(1)
@@ -42,6 +59,23 @@ export default function LiveSessionScreen() {
 
   const uvIndex = uvForecast?.current.uvIndex ?? 0
   const state = computeLiveSessionState({ elapsedSeconds, skinType, uvIndex, spf, sunSensitivity })
+
+  // Keep recent sessions fresh so the pre-start recovery caution is accurate even
+  // when this screen is opened directly (Home usually loads them already).
+  useEffect(() => {
+    if (userId) void loadRecentSessions(userId, 7)
+  }, [userId, loadRecentSessions])
+
+  // Recovery-aware pre-start caution — reuses the recovery engine, no new logic.
+  const recoveryNote = useMemo(() => {
+    const recovery = buildRecoveryStatus({ recentSessions, today: getTodayString() })
+    return getLiveRecoveryNote(recovery.level)
+  }, [recentSessions])
+
+  // High-UV warning — reuses the shared UV classifier.
+  const uvWarning = uvForecast !== null ? getLiveUvWarning(classifyUv(uvIndex)) : null
+
+  const notStarted = elapsedSeconds === 0 && !isRunning
 
   // Tick every second while running.
   useEffect(() => {
@@ -114,6 +148,23 @@ export default function LiveSessionScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <View style={styles.content}>
+        {/* Pre-start recovery caution — shown before the session begins when recent
+            skin response suggests recovery. Non-blocking: the user can still start. */}
+        {notStarted && recoveryNote !== null ? (
+          <View
+            style={styles.recoveryCaution}
+            accessibilityRole="alert"
+            accessibilityLabel={`Antes de empezar: ${recoveryNote}`}
+          >
+            <AppText variant="bodyStrong" color="warning">
+              Antes de empezar
+            </AppText>
+            <AppText variant="caption" color="textSecondary" style={styles.recoveryCautionText}>
+              {recoveryNote}
+            </AppText>
+          </View>
+        ) : null}
+
         {/* SPF selector */}
         <View style={styles.spfRow}>
           {SPF_PRESETS.map((preset) => {
@@ -134,6 +185,13 @@ export default function LiveSessionScreen() {
             )
           })}
         </View>
+
+        {/* High-UV warning */}
+        {state.status !== 'no_risk' && uvWarning !== null ? (
+          <AppText variant="caption" color="warning" style={styles.uvWarning}>
+            {uvWarning}
+          </AppText>
+        ) : null}
 
         {/* Protection note */}
         {state.status !== 'no_risk' && state.protectionReality.explanation !== '' ? (
@@ -181,6 +239,12 @@ export default function LiveSessionScreen() {
               </View>
             </>
           ) : null}
+
+          {state.status !== 'no_risk' ? (
+            <AppText variant="caption" color="textMuted" style={styles.discomfortNote}>
+              {LIVE_DISCOMFORT_NOTE}
+            </AppText>
+          ) : null}
         </Card>
 
         {/* Reapply protection warning */}
@@ -216,7 +280,13 @@ export default function LiveSessionScreen() {
           size="lg"
           fullWidth
           onPress={() => setIsRunning((r) => !r)}
-          accessibilityLabel={isRunning ? 'Pausar la sesión' : 'Iniciar la sesión'}
+          accessibilityLabel={
+            isRunning
+              ? 'Pausar la sesión'
+              : elapsedSeconds === 0
+                ? 'Empezar la sesión'
+                : 'Reanudar la sesión'
+          }
         />
         <Button
           label="Finalizar y registrar"
@@ -224,8 +294,11 @@ export default function LiveSessionScreen() {
           size="md"
           fullWidth
           onPress={handleFinish}
-          accessibilityLabel="Finalizar la sesión y registrarla"
+          accessibilityLabel="Finalizar la sesión y registrar cómo respondió tu piel"
         />
+        <AppText variant="caption" color="textMuted" style={styles.endEarlyNote}>
+          {LIVE_END_EARLY_NOTE}
+        </AppText>
         <Button
           label="Reiniciar"
           variant="ghost"
@@ -234,6 +307,9 @@ export default function LiveSessionScreen() {
           onPress={handleReset}
           accessibilityLabel="Reiniciar el cronómetro"
         />
+        <AppText variant="caption" color="textMuted" style={styles.disclaimerNote}>
+          {LIVE_DISCLAIMER_NOTE}
+        </AppText>
       </View>
     </SafeAreaView>
   )
@@ -307,6 +383,9 @@ const styles = StyleSheet.create({
   protectionNote: {
     lineHeight: 18,
   },
+  uvWarning: {
+    lineHeight: 18,
+  },
   faceGuardNote: {
     lineHeight: 18,
   },
@@ -316,6 +395,27 @@ const styles = StyleSheet.create({
   },
   flipText: {
     marginTop: spacing.xs,
+  },
+  recoveryCaution: {
+    backgroundColor: colors.warningSoft,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  recoveryCautionText: {
+    lineHeight: 18,
+  },
+  discomfortNote: {
+    marginTop: spacing.md,
+    lineHeight: 18,
+  },
+  endEarlyNote: {
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  disclaimerNote: {
+    textAlign: 'center',
+    lineHeight: 18,
   },
   spacer: {
     flex: 1,
