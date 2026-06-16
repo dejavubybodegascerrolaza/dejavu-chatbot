@@ -5,19 +5,13 @@ import { colors, spacing } from '@/design'
 import { formatEtaDate, formatPlanDuration, TAN_LEVEL_LABELS } from '@/modules/plan'
 import type { TanPlanResult } from '@/modules/plan'
 import { formatMinutes } from '@/modules/sun'
+import { ADHERENCE_STATUS_LABELS } from '@/modules/adherence'
 import type { PlanAdherence } from '@/modules/adherence'
 
 type Props = {
   plan: TanPlanResult | null
   onPress: () => void
   adherence?: PlanAdherence | null
-}
-
-const ADHERENCE_LABELS: Record<string, string> = {
-  on_track: 'En ritmo estimado',
-  slightly_behind: 'Algo por detrás del ritmo',
-  insufficient_data: 'Estimando ritmo…',
-  paused_recovery: 'Plan pausado',
 }
 
 /**
@@ -56,7 +50,7 @@ export function TanPlanCard({ plan, onPress, adherence }: Props) {
 
   const adherenceLabel =
     adherence != null && adherence.status !== 'unknown'
-      ? (ADHERENCE_LABELS[adherence.status] ?? null)
+      ? ADHERENCE_STATUS_LABELS[adherence.status]
       : null
 
   return (

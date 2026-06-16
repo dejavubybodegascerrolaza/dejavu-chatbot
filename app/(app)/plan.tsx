@@ -3,7 +3,8 @@ import { ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button, Card } from '@/components/ui'
-import { ProfileOptionCard } from '@/components/product'
+import { PlanStatusCard, ProfileOptionCard } from '@/components/product'
+import { resolvePlanStatus, PLAN_ADJUSTMENT_NOTES } from '@/modules/plan/plan.presentation'
 import { colors, spacing } from '@/design'
 import { formatDisplayDate, getTodayISODate } from '@/utils/date'
 import { useProfileStore } from '@/modules/profile/profile.store'
@@ -69,6 +70,12 @@ export default function PlanScreen() {
     })
   }, [plan, startDate, historySessions, recentSessions, today])
 
+  // At-a-glance plan state — pure mapping from existing plan + adherence outputs.
+  const planStatus = resolvePlanStatus(plan, adherence)
+  // The detailed result card already explains "goal already reached"; avoid a
+  // contradictory top status card in that one edge case.
+  const showStatusCard = plan === null || plan.status !== 'goal_below_current'
+
   return (
     <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
       <ScrollView
@@ -76,6 +83,8 @@ export default function PlanScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {showStatusCard ? <PlanStatusCard summary={planStatus} /> : null}
+
         <AppText variant="body" color="textSecondary">
           Elige tu objetivo de tono. Bronze IQ estima el número de sesiones y el tiempo orientativo
           que puede llevarte lograrlo según tu fototipo. Es una proyección, no una garantía.
@@ -125,6 +134,9 @@ export default function PlanScreen() {
                   Llegas a {TAN_LEVEL_LABELS[plan.reachableLevel]} en{' '}
                   {formatPlanDuration(plan.totalDays)} ({plan.sessionDays} sesiones estimadas)
                 </AppText>
+                <AppText variant="caption" color="textMuted" style={styles.etaDisclaimer}>
+                  Estimación, no garantía. Se ajusta con tus sesiones registradas y tu piel.
+                </AppText>
 
                 <View style={styles.metaRow}>
                   <AppText variant="caption" color="textSecondary">
@@ -162,6 +174,25 @@ export default function PlanScreen() {
             ) : null}
           </Card>
         ) : null}
+
+        {/* How Bronze IQ adjusts this plan */}
+        <Card variant="outlined">
+          <AppText variant="label" color="textSecondary" style={styles.resultLabel}>
+            Cómo se ajusta tu plan
+          </AppText>
+          <View style={styles.adjustList}>
+            {PLAN_ADJUSTMENT_NOTES.map((note) => (
+              <View key={note} style={styles.adjustRow}>
+                <AppText variant="caption" color="textMuted" style={styles.adjustBullet}>
+                  ·
+                </AppText>
+                <AppText variant="caption" color="textSecondary" style={styles.adjustText}>
+                  {note}
+                </AppText>
+              </View>
+            ))}
+          </View>
+        </Card>
 
         {/* Science / safety note */}
         <Card variant="outlined">
@@ -253,6 +284,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scienceText: {
+    lineHeight: 18,
+  },
+  etaDisclaimer: {
+    marginTop: spacing.xs,
+    lineHeight: 18,
+  },
+  adjustList: {
+    gap: spacing.xs,
+  },
+  adjustRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  adjustBullet: {
+    lineHeight: 18,
+  },
+  adjustText: {
+    flex: 1,
     lineHeight: 18,
   },
 })
