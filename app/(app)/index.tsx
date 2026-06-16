@@ -8,6 +8,7 @@ import {
   AchievementsCard,
   BurnTimeCard,
   FaceGuardCard,
+  QuickActionsBar,
   RecoveryGuidanceCard,
   RecommendationCard,
   SessionCard,
@@ -52,7 +53,6 @@ const ACK_TONE_TEXT: Record<SaveAckTone, 'success' | 'warning' | 'danger'> = {
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user)
-  const { logout, isSubmitting: isLoggingOut } = useAuthStore()
 
   const profile = useProfileStore((s) => s.profile)
   const profileStatus = useProfileStore((s) => s.status)
@@ -429,34 +429,25 @@ export default function HomeScreen() {
           accessibilityLabel="Iniciar una sesión de exposición en directo"
         />
 
-        {/* Register CTA */}
-        <Button
-          label="Registrar exposición"
-          variant="secondary"
-          size="md"
-          fullWidth
-          onPress={handleRegister}
-          accessibilityLabel="Registrar una sesión de exposición solar"
-        />
-
-        {/* History link */}
-        <Button
-          label="Ver historial"
-          variant="secondary"
-          size="md"
-          fullWidth
-          onPress={() => router.push('/(app)/history')}
-          accessibilityLabel="Ver historial completo de sesiones"
-        />
-
-        {/* Settings link */}
-        <Button
-          label="Ajustes"
-          variant="ghost"
-          size="md"
-          fullWidth
-          onPress={() => router.push('/(app)/settings')}
-          accessibilityLabel="Ir a ajustes"
+        {/* Compact secondary navigation — logout lives in Settings */}
+        <QuickActionsBar
+          actions={[
+            {
+              label: 'Registrar',
+              onPress: handleRegister,
+              accessibilityLabel: 'Registrar una sesión de exposición solar',
+            },
+            {
+              label: 'Historial',
+              onPress: () => router.push('/(app)/history'),
+              accessibilityLabel: 'Ver historial completo de sesiones',
+            },
+            {
+              label: 'Ajustes',
+              onPress: () => router.push('/(app)/settings'),
+              accessibilityLabel: 'Ir a ajustes',
+            },
+          ]}
         />
 
         {/* Sessions today */}
@@ -489,18 +480,6 @@ export default function HomeScreen() {
         ) : null}
 
         <SafetyNote />
-
-        {/* Logout */}
-        <Button
-          label="Cerrar sesión"
-          variant="ghost"
-          size="md"
-          fullWidth
-          loading={isLoggingOut}
-          onPress={() => void logout()}
-          accessibilityLabel="Cerrar sesión"
-          style={styles.logoutButton}
-        />
       </ScrollView>
     </SafeAreaView>
   )
@@ -557,8 +536,5 @@ const styles = StyleSheet.create({
   },
   sessionList: {
     gap: spacing.md,
-  },
-  logoutButton: {
-    marginTop: spacing.sm,
   },
 })
