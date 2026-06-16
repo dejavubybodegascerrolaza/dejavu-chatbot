@@ -22,3 +22,11 @@ export const PRIVACY_DATA_ITEMS: readonly string[] = [
   'Bronze IQ no diagnostica tu piel ni almacena imágenes.',
   'Puedes solicitar la eliminación de todos tus datos en cualquier momento.',
 ]
+
+/** Copy for the data export flow. */
+export const EXPORT_COPY = {
+  settingsLabel: 'Exportar mis datos',
+  settingsDescription: 'Descarga tus sesiones, perfil y plan en formato JSON.',
+  shareTitle: 'Mis datos de Bronze IQ',
+  errorMessage: 'No se han podido exportar tus datos. Inténtalo de nuevo.',
+} as const

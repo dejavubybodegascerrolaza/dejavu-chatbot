@@ -56,6 +56,7 @@ export default function HomeScreen() {
 
   const profile = useProfileStore((s) => s.profile)
   const profileStatus = useProfileStore((s) => s.status)
+  const clearProfile = useProfileStore((s) => s.clearProfile)
 
   const {
     status: todayStatus,
@@ -101,6 +102,7 @@ export default function HomeScreen() {
     return () => {
       clearSessions()
       resetPlan()
+      clearProfile()
     }
   }, [
     userId,
@@ -110,6 +112,7 @@ export default function HomeScreen() {
     loadPlan,
     clearSessions,
     resetPlan,
+    clearProfile,
   ])
 
   useEffect(() => {

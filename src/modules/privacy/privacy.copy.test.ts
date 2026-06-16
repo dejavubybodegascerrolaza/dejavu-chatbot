@@ -1,4 +1,4 @@
-import { DELETION_COPY, PRIVACY_DATA_ITEMS } from './privacy.copy'
+import { DELETION_COPY, EXPORT_COPY, PRIVACY_DATA_ITEMS } from './privacy.copy'
 
 const IMMEDIATE_DELETION =
   /eliminaci[oó]n inmediata|borrado instant[aá]neo|eliminamos?.* inmediatamente/i
@@ -32,6 +32,27 @@ describe('DELETION_COPY', () => {
   it('success copy clarifies the request is pending, not completed', () => {
     expect(DELETION_COPY.successBody).toMatch(/procesaremos/)
     expect(DELETION_COPY.successBody).not.toMatch(IMMEDIATE_DELETION)
+  })
+})
+
+describe('EXPORT_COPY', () => {
+  const allCopy = Object.values(EXPORT_COPY).join('\n')
+
+  it('does not claim to export all data', () => {
+    expect(allCopy).not.toMatch(/todos los datos|todos tus datos|todo tu historial/i)
+  })
+
+  it('does not make legal compliance claims', () => {
+    expect(allCopy).not.toMatch(/cumplimiento legal|cumplimos|conforme a la ley|garantizamos/i)
+  })
+
+  it('does not claim immediate deletion', () => {
+    expect(allCopy).not.toMatch(IMMEDIATE_DELETION)
+  })
+
+  it('does not make medical or legal overclaims', () => {
+    expect(allCopy).not.toMatch(MEDICAL_CLAIM)
+    expect(allCopy).not.toMatch(OVERCLAIM)
   })
 })
 

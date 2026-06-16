@@ -11,6 +11,7 @@ type Props = {
   onPress: () => void
   variant?: Variant
   accessibilityLabel?: string
+  disabled?: boolean
 }
 
 export function SettingsRow({
@@ -19,15 +20,21 @@ export function SettingsRow({
   onPress,
   variant = 'normal',
   accessibilityLabel,
+  disabled = false,
 }: Props) {
   const isDanger = variant === 'danger'
 
   return (
     <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      onPress={disabled ? undefined : onPress}
+      style={({ pressed }) => [
+        styles.container,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityState={{ disabled }}
     >
       <View style={styles.textGroup}>
         <AppText variant="body" color={isDanger ? 'danger' : 'textPrimary'}>
@@ -59,6 +66,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  disabled: {
+    opacity: 0.4,
   },
   textGroup: {
     flex: 1,

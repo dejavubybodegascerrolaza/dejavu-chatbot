@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { ScrollView, Share, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText, Button } from '@/components/ui'
@@ -15,12 +15,33 @@ import {
 } from '@/modules/profile/profile.labels'
 import { buildCalibrationProfile } from '@/modules/calibration'
 import { useNotificationStore } from '@/modules/notifications/notifications.store'
-import { PRIVACY_DATA_ITEMS } from '@/modules/privacy/privacy.copy'
+import { EXPORT_COPY, PRIVACY_DATA_ITEMS } from '@/modules/privacy/privacy.copy'
+import { buildUserDataExport } from '@/modules/privacy/export.service'
 
 export default function SettingsScreen() {
   const { logout, isSubmitting: isLoggingOut } = useAuthStore()
+  const userId = useAuthStore((s) => s.user?.id ?? null)
   const profile = useProfileStore((s) => s.profile)
   const profileStatus = useProfileStore((s) => s.status)
+
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExport = async () => {
+    if (!userId) return
+    setIsExporting(true)
+    try {
+      const data = await buildUserDataExport(userId)
+      await Share.share({
+        title: EXPORT_COPY.shareTitle,
+        message: JSON.stringify(data, null, 2),
+      })
+    } catch {
+      // Share sheet cancellation throws — silently ignore; other errors
+      // are surfaced by the OS share sheet itself.
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   const notificationPermission = useNotificationStore((s) => s.permission)
   const notificationPrefs = useNotificationStore((s) => s.preferences)
@@ -164,6 +185,13 @@ export default function SettingsScreen() {
           <AppText variant="label" color="textMuted" style={styles.sectionTitle}>
             PRIVACIDAD
           </AppText>
+          <SettingsRow
+            title={EXPORT_COPY.settingsLabel}
+            description={EXPORT_COPY.settingsDescription}
+            onPress={() => void handleExport()}
+            accessibilityLabel="Exportar mis datos en formato JSON"
+            disabled={isExporting}
+          />
           <SettingsRow
             title="Solicitar eliminación de datos"
             description="Registra una solicitud. Se procesa en un máximo de 30 días."
