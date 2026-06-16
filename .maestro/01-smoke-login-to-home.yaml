@@ -50,6 +50,7 @@ appId: com.bronzeiq.app
     commands:
       - tapOn: "Permitir"
 
-# Home should be visible — check for a stable landmark
+# Home should be visible — check stable testID-anchored landmarks
 - assertVisible: "Hola"
-- assertVisible: "Sesión en directo"
+- assertVisible:
+    id: "home-live-session-button"

@@ -366,14 +366,16 @@ export default function HomeScreen() {
 
         {/* Today Decision — primary card */}
         {todayDecision.recommendationLevel !== null ? (
-          <RecommendationCard
-            title={todayDecision.title}
-            message={todayDecision.explanation}
-            level={todayDecision.recommendationLevel}
-            reasons={todayDecision.reasons}
-            ctaLabel={todayDecision.bestNextAction}
-            onCtaPress={handleDecisionCta}
-          />
+          <View testID="home-today-decision-card">
+            <RecommendationCard
+              title={todayDecision.title}
+              message={todayDecision.explanation}
+              level={todayDecision.recommendationLevel}
+              reasons={todayDecision.reasons}
+              ctaLabel={todayDecision.bestNextAction}
+              onCtaPress={handleDecisionCta}
+            />
+          </View>
         ) : null}
 
         {/* Recovery guidance — shown when skin response signals overexposure */}
