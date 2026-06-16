@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/feedback'
 import {
   AchievementsCard,
   BurnTimeCard,
+  FaceGuardCard,
   RecoveryGuidanceCard,
   RecommendationCard,
   SessionCard,
@@ -264,6 +265,9 @@ export default function HomeScreen() {
         {todayDecision.recoveryStatus.level !== 'none' ? (
           <RecoveryGuidanceCard recovery={todayDecision.recoveryStatus} />
         ) : null}
+
+        {/* Face Guard — shown when elevated or strong */}
+        <FaceGuardCard faceGuard={todayDecision.faceGuard} />
 
         {/* Live UV */}
         {uvForecast !== null ? <UvIndexCard forecast={uvForecast} /> : null}

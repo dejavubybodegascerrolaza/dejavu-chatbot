@@ -8,6 +8,7 @@ import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
 import type { PlanAdherence } from '../adherence/adherence.types'
 import type { CalibrationProfile } from '../calibration/calibration.types'
+import type { FaceGuard } from '../face-guard/face-guard.types'
 
 /**
  * Driving state for the primary Home decision card.
@@ -55,6 +56,8 @@ export type TodayDecision = {
   planAdherence: PlanAdherence | null
   /** Calibration profile derived from skin type and sun sensitivity. */
   calibrationProfile: CalibrationProfile | null
+  /** Face-specific protection guidance derived from UV, profile and recovery signals. */
+  faceGuard: FaceGuard
 }
 
 export type TodayDecisionInput = {

@@ -7,10 +7,12 @@ import { calculateSafetyStreak } from '../gamification/gamification.engine'
 import { buildRecoveryStatus } from '../recovery/recovery.engine'
 import { buildPlanAdherence } from '../adherence/adherence.engine'
 import { buildCalibrationProfile } from '../calibration/calibration.engine'
+import { buildFaceGuard } from '../face-guard/face-guard.engine'
 import type { RecommendationLevel } from '../recommendations/recommendation.types'
 import type { MainGoal } from '../profile/profile.types'
 import type { LocationStatus } from '../location/location.store'
 import type { RecoveryStatus } from '../recovery/recovery.types'
+import type { FaceGuard } from '../face-guard/face-guard.types'
 import type { TodayDecision, TodayDecisionInput, TodayDecisionState } from './today.types'
 
 // ── State derivation ──────────────────────────────────────────────────────────
@@ -43,6 +45,13 @@ const NULL_RECOVERY: RecoveryStatus = {
   message: '',
 }
 
+const NULL_FACE_GUARD: FaceGuard = {
+  level: 'standard',
+  summary: '',
+  reasons: [],
+  suggestedAction: 'continue_with_face_protection',
+}
+
 const UNAVAILABLE: TodayDecision = {
   state: 'unavailable',
   title: 'Cargando tu información',
@@ -64,6 +73,7 @@ const UNAVAILABLE: TodayDecision = {
   recoveryStatus: NULL_RECOVERY,
   planAdherence: null,
   calibrationProfile: null,
+  faceGuard: NULL_FACE_GUARD,
 }
 
 // ── mainGoal-aware CTA ────────────────────────────────────────────────────────
@@ -195,7 +205,15 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     sunSensitivity: profile.sunSensitivity,
   })
 
-  // 11. Copy — location_needed overrides the recommendation title and explanation
+  // 11. Face Guard — face-specific protection guidance
+  const faceGuard = buildFaceGuard({
+    skinType: profile.skinType,
+    sunSensitivity: profile.sunSensitivity,
+    uvCategory,
+    recoveryLevel: recoveryStatus.level,
+  })
+
+  // 12. Copy — location_needed overrides the recommendation title and explanation
   //     so the user knows the decision is less accurate without UV data.
   const title = state === 'location_needed' ? LOCATION_COPY.title : recommendation.title
   const explanation =
@@ -223,5 +241,6 @@ export function buildTodayDecision(input: TodayDecisionInput): TodayDecision {
     recoveryStatus,
     planAdherence,
     calibrationProfile,
+    faceGuard,
   }
 }

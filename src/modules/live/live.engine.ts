@@ -1,11 +1,13 @@
 import { calculateBurnTime } from '../sun/sun.burn-time'
 import { buildProtectionReality, spfToProtectionLevel } from '../protection/protection.engine'
+import { buildFaceGuard } from '../face-guard/face-guard.engine'
 import { classifyUv } from '../uv/uv.rules'
 import { DEFAULT_FLIP_INTERVAL_MINUTES } from './live.rules'
 import type { ProtectionReality } from '../protection/protection.types'
+import type { FaceGuard } from '../face-guard/face-guard.types'
 import type { LiveSessionInput, LiveSessionState, LiveStatus } from './live.types'
 
-// ── Sentinel ──────────────────────────────────────────────────────────────────
+// ── Sentinels ─────────────────────────────────────────────────────────────────
 
 // When UV is zero there is no erythemal risk; protection reality is moot.
 const NO_RISK_PROTECTION: ProtectionReality = {
@@ -13,6 +15,13 @@ const NO_RISK_PROTECTION: ProtectionReality = {
   explanation: '',
   suggestedAction: 'continue_conservatively',
   reapplyWarning: false,
+}
+
+const NO_RISK_FACE_GUARD: FaceGuard = {
+  level: 'standard',
+  summary: '',
+  reasons: [],
+  suggestedAction: 'continue_with_face_protection',
 }
 
 /**
@@ -46,6 +55,7 @@ export function computeLiveSessionState(input: LiveSessionInput): LiveSessionSta
       progress: 0,
       flipCount,
       protectionReality: NO_RISK_PROTECTION,
+      faceGuard: NO_RISK_FACE_GUARD,
     }
   }
 
@@ -69,6 +79,14 @@ export function computeLiveSessionState(input: LiveSessionInput): LiveSessionSta
     sunSensitivity: input.sunSensitivity ?? null,
   })
 
+  // Face Guard — derived from UV, profile signals, and current protection reliability.
+  const faceGuard = buildFaceGuard({
+    skinType: input.skinType,
+    sunSensitivity: input.sunSensitivity ?? 'medium',
+    uvCategory,
+    protectionReliability: protectionReality.reliability,
+  })
+
   return {
     status,
     elapsedSeconds,
@@ -78,5 +96,6 @@ export function computeLiveSessionState(input: LiveSessionInput): LiveSessionSta
     progress,
     flipCount,
     protectionReality,
+    faceGuard,
   }
 }

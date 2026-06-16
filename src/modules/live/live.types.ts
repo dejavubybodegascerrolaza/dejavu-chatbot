@@ -1,5 +1,6 @@
 import type { SkinType, SunSensitivity } from '../profile/profile.types'
 import type { ProtectionReality } from '../protection/protection.types'
+import type { FaceGuard } from '../face-guard/face-guard.types'
 
 /** Live session status, from safe to a clear stop signal. */
 export type LiveStatus = 'no_risk' | 'safe' | 'caution' | 'danger'
@@ -31,4 +32,6 @@ export type LiveSessionState = {
   flipCount: number
   /** Protection reliability and suggested next action. */
   protectionReality: ProtectionReality
+  /** Face-specific guidance derived from UV and profile signals. */
+  faceGuard: FaceGuard
 }

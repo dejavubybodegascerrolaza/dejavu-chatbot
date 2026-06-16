@@ -142,6 +142,13 @@ export default function LiveSessionScreen() {
           </AppText>
         ) : null}
 
+        {/* Face Guard note */}
+        {state.status !== 'no_risk' && state.faceGuard.level !== 'standard' ? (
+          <AppText variant="caption" color="textMuted" style={styles.faceGuardNote}>
+            {state.faceGuard.summary}
+          </AppText>
+        ) : null}
+
         {/* Clock */}
         <View style={styles.clockBlock}>
           <AppText variant="display" color={clockColor} style={styles.clock}>
@@ -298,6 +305,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
   },
   protectionNote: {
+    lineHeight: 18,
+  },
+  faceGuardNote: {
     lineHeight: 18,
   },
   reapplyText: {
