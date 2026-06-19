@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
 import { StyleSheet, View, Pressable } from 'react-native'
 import { Screen, AppText, Button, Input } from '@/components/ui'
-import { OnboardingStep, ProfileOptionCard, FormSection } from '@/components/product'
+import {
+  OnboardingStep,
+  ProfileOptionCard,
+  FormSection,
+  FitzpatrickTest,
+} from '@/components/product'
 import { colors, spacing, radius } from '@/design'
 import type { MainGoal, SunSensitivity, SkinType } from '@/modules/profile/profile.types'
 import { useProfileStore } from '@/modules/profile/profile.store'
@@ -17,7 +22,6 @@ type WizardState = {
   aliasTouched: boolean
   mainGoal: MainGoal | null
   sunSensitivity: SunSensitivity | null
-  skinType: SkinType | null
 }
 
 const MAIN_GOAL_OPTIONS: Array<{ label: string; value: MainGoal }> = [
@@ -32,15 +36,6 @@ const SENSITIVITY_OPTIONS: Array<{ label: string; value: SunSensitivity }> = [
   { label: 'A veces me irrito si me paso', value: 'high' },
   { label: 'Normalmente tolero exposiciones moderadas', value: 'medium' },
   { label: 'Suelo tolerarlo bien, pero quiero controlarlo', value: 'low' },
-]
-
-const SKIN_TYPE_OPTIONS: Array<{ label: string; description: string; value: SkinType }> = [
-  { label: 'Tipo I', description: 'Muy clara, se quema muy fácilmente', value: 1 },
-  { label: 'Tipo II', description: 'Clara, se quema con facilidad', value: 2 },
-  { label: 'Tipo III', description: 'Intermedia, puede broncearse gradualmente', value: 3 },
-  { label: 'Tipo IV', description: 'Morena clara, suele tolerar mejor', value: 4 },
-  { label: 'Tipo V', description: 'Morena', value: 5 },
-  { label: 'Tipo VI', description: 'Muy oscura', value: 6 },
 ]
 
 // ─── Step progress ───────────────────────────────────────────────────────────
@@ -67,7 +62,6 @@ export default function OnboardingScreen() {
     aliasTouched: false,
     mainGoal: null,
     sunSensitivity: null,
-    skinType: null,
   })
 
   const update = (partial: Partial<WizardState>) => setWizard((prev) => ({ ...prev, ...partial }))
@@ -323,64 +317,15 @@ export default function OnboardingScreen() {
     )
   }
 
-  // Step 7 — Skin type (optional)
+  // Step 7 — Fitzpatrick phototype self-assessment (scored questionnaire)
   return (
-    <Screen scroll padded>
-      <View style={styles.stepContainer}>
-        <View style={styles.stepContent}>
-          <AppText variant="caption" color="textMuted">
-            {PROFILE_STEP_LABEL[7]}
-          </AppText>
-          <FormSection
-            title="Fototipo de piel"
-            description="Indicar tu fototipo mejora la calibración de las estimaciones orientativas. Sin él, Bronze IQ aplica un margen conservador. Es opcional y puedes cambiarlo después."
-          >
-            {SKIN_TYPE_OPTIONS.map((option) => (
-              <ProfileOptionCard
-                key={option.value}
-                label={option.label}
-                description={option.description}
-                selected={wizard.skinType === option.value}
-                onPress={() =>
-                  update({ skinType: wizard.skinType === option.value ? null : option.value })
-                }
-              />
-            ))}
-          </FormSection>
-
-          {error ? (
-            <View style={styles.errorBanner}>
-              <AppText variant="caption" color="danger">
-                {error}
-              </AppText>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.stepActions}>
-          <Button
-            label="Guardar"
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={isSubmitting}
-            onPress={() => void handleSave(wizard.skinType)}
-            accessibilityLabel="Guardar perfil y continuar"
-            testID="onboarding-save-profile"
-          />
-          <Button
-            label="No lo sé / Prefiero no indicarlo"
-            variant="ghost"
-            size="md"
-            fullWidth
-            disabled={isSubmitting}
-            onPress={() => void handleSave(null)}
-            accessibilityLabel="Continuar sin indicar fototipo"
-            testID="onboarding-skip-skin-type"
-          />
-        </View>
-      </View>
-    </Screen>
+    <FitzpatrickTest
+      onComplete={(skinType) => void handleSave(skinType)}
+      onSkip={() => void handleSave(null)}
+      onExit={() => update({ step: 6 })}
+      saving={isSubmitting}
+      error={error}
+    />
   )
 }
 
