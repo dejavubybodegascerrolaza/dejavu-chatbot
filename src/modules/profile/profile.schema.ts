@@ -18,6 +18,19 @@ export const skinTypeSchema = z.union([
   z.literal(6),
 ])
 
+// ─── Optional sensitivity & care profile ─────────────────────────────────────
+export const ageRangeSchema = z.enum(['18_25', '26_35', '36_50', '51_plus'])
+export const blisteringSunburnsSchema = z.enum(['none', 'adult', 'childhood'])
+export const tanningBedUseSchema = z.enum(['never', 'past', 'regular'])
+export const moleCountSchema = z.enum(['few', 'some', 'many'])
+
+const sensitivityFields = {
+  ageRange: ageRangeSchema.nullable().optional(),
+  blisteringSunburns: blisteringSunburnsSchema.nullable().optional(),
+  tanningBedUse: tanningBedUseSchema.nullable().optional(),
+  moleCount: moleCountSchema.nullable().optional(),
+}
+
 export const profileSchema = z.object({
   id: z.string().uuid(),
   alias: z
@@ -46,6 +59,7 @@ export const profileSetupSchema = z.object({
   disclaimerAcceptedAt: z
     .string()
     .datetime({ message: 'Debes aceptar el disclaimer para continuar' }),
+  ...sensitivityFields,
 })
 
 export const profileUpdateSchema = z.object({
@@ -58,6 +72,7 @@ export const profileUpdateSchema = z.object({
   mainGoal: mainGoalSchema.optional(),
   sunSensitivity: sunSensitivitySchema.optional(),
   skinType: skinTypeSchema.nullable().optional(),
+  ...sensitivityFields,
 })
 
 export type ProfileSetupInput = z.infer<typeof profileSetupSchema>

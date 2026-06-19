@@ -21,6 +21,10 @@ export type Database = {
           main_goal: string
           sun_sensitivity: string
           skin_type: number | null
+          age_range: string | null
+          blistering_sunburns: string | null
+          tanning_bed_use: string | null
+          mole_count: string | null
           onboarding_completed: boolean
           disclaimer_accepted_at: string | null
           created_at: string
@@ -32,6 +36,10 @@ export type Database = {
           main_goal: string
           sun_sensitivity: string
           skin_type?: number | null
+          age_range?: string | null
+          blistering_sunburns?: string | null
+          tanning_bed_use?: string | null
+          mole_count?: string | null
           onboarding_completed?: boolean
           disclaimer_accepted_at?: string | null
           created_at?: string
@@ -43,6 +51,10 @@ export type Database = {
           main_goal?: string
           sun_sensitivity?: string
           skin_type?: number | null
+          age_range?: string | null
+          blistering_sunburns?: string | null
+          tanning_bed_use?: string | null
+          mole_count?: string | null
           onboarding_completed?: boolean
           disclaimer_accepted_at?: string | null
           created_at?: string

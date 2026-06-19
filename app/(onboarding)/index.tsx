@@ -6,9 +6,11 @@ import {
   ProfileOptionCard,
   FormSection,
   FitzpatrickTest,
+  SensitivityTest,
 } from '@/components/product'
 import { colors, spacing, radius } from '@/design'
 import type { MainGoal, SunSensitivity, SkinType } from '@/modules/profile/profile.types'
+import type { SensitivityProfile } from '@/modules/profile/sensitivity'
 import { useProfileStore } from '@/modules/profile/profile.store'
 import { useAuthStore } from '@/modules/auth/auth.store'
 
@@ -22,6 +24,7 @@ type WizardState = {
   aliasTouched: boolean
   mainGoal: MainGoal | null
   sunSensitivity: SunSensitivity | null
+  skinType: SkinType | null
 }
 
 const MAIN_GOAL_OPTIONS: Array<{ label: string; value: MainGoal }> = [
@@ -62,6 +65,7 @@ export default function OnboardingScreen() {
     aliasTouched: false,
     mainGoal: null,
     sunSensitivity: null,
+    skinType: null,
   })
 
   const update = (partial: Partial<WizardState>) => setWizard((prev) => ({ ...prev, ...partial }))
@@ -76,7 +80,7 @@ export default function OnboardingScreen() {
         : null
     : null
 
-  const handleSave = async (skinType: SkinType | null) => {
+  const handleSave = async (skinType: SkinType | null, sensitivity: SensitivityProfile) => {
     if (!user) return
     clearError()
     await completeOnboarding(user.id, {
@@ -85,6 +89,7 @@ export default function OnboardingScreen() {
       sunSensitivity: wizard.sunSensitivity as SunSensitivity,
       skinType,
       disclaimerAcceptedAt: wizard.disclaimerAcceptedAt as string,
+      ...sensitivity,
     })
   }
 
@@ -318,11 +323,21 @@ export default function OnboardingScreen() {
   }
 
   // Step 7 — Fitzpatrick phototype self-assessment (scored questionnaire)
+  if (wizard.step === 7) {
+    return (
+      <FitzpatrickTest
+        onComplete={(skinType) => update({ skinType, step: 8 })}
+        onSkip={() => update({ skinType: null, step: 8 })}
+        onExit={() => update({ step: 6 })}
+      />
+    )
+  }
+
+  // Step 8 — Optional sensitivity & care layer (evidence-based modifiers)
   return (
-    <FitzpatrickTest
-      onComplete={(skinType) => void handleSave(skinType)}
-      onSkip={() => void handleSave(null)}
-      onExit={() => update({ step: 6 })}
+    <SensitivityTest
+      onComplete={(sensitivity) => void handleSave(wizard.skinType, sensitivity)}
+      onSkip={() => void handleSave(wizard.skinType, {})}
       saving={isSubmitting}
       error={error}
     />

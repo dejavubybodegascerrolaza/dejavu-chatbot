@@ -61,6 +61,27 @@ La función pura `computeFitzpatrick()` exige que **todas** las preguntas estén
 respondidas (`isComplete()`), suma las puntuaciones y aplica las bandas
 (`scoreToSkinType()`). Cubierto por `fitzpatrick.scoring.test.ts`.
 
+## Capa opcional: perfil de sensibilidad y cuidado
+
+El fototipo no es lo único que influye en cómo una piel tolera el sol. Sobre el
+Fitzpatrick (que **no se modifica**) se añade una capa **opcional y saltable** con
+factores fenotípicos/de comportamiento de respaldo científico. No puntúan el
+fototipo: permiten que la app sea **más prudente** y recomiende acudir a un
+profesional cuando procede. Vive en `src/modules/profile/sensitivity/`.
+
+| Factor preguntado       | Por qué importa                                    | Fuente                                  |
+| ----------------------- | -------------------------------------------------- | --------------------------------------- |
+| Quemaduras con ampollas | Factor de riesgo de melanoma (sobre todo infancia) | Dennis LK et al., _Ann Epidemiol_ 2008  |
+| Nº de lunares           | Predictor de riesgo cutáneo                        | Gandini S et al., _Eur J Cancer_ 2005   |
+| Uso de cabinas UVA      | Carcinógeno grupo 1 (IARC)                         | IARC Monograph 100D; Boniol, _BMJ_ 2012 |
+| Rango de edad           | Modula respuesta y daño acumulado                  | —                                       |
+
+`getCareFlags()` / `getCareNotes()` (puros, testeados en
+`sensitivity.flags.test.ts`) derivan avisos **no diagnósticos** cuando hay
+señales de mayor cautela (quemaduras en la infancia, muchos lunares o uso
+regular de cabinas UVA). Estos campos son **datos sensibles**: se redactan en
+logs (`src/lib/observability.ts`) y nunca se envían a terceros.
+
 ## Cómo se usa el resultado en la app
 
 El fototipo (1–6) alimenta los cálculos orientativos ya existentes:
@@ -89,3 +110,10 @@ onboarding, en la pantalla de resultado del test y en el disclaimer.
   2009;27(4):529–533.
 - Sachdeva S. _Fitzpatrick skin typing: Applications in dermatology._ Indian J
   Dermatol Venereol Leprol. 2009;75(1):93–96.
+- Dennis LK et al. _Sunburns and risk of cutaneous melanoma: does age matter? A
+  comprehensive meta-analysis._ Ann Epidemiol. 2008;18(8):614–627.
+- Gandini S et al. _Meta-analysis of risk factors for cutaneous melanoma._ Eur J
+  Cancer. 2005;41(1):28–44 / 45–60.
+- IARC. _Radiation: Solar and UV Radiation._ IARC Monographs Vol. 100D, 2012.
+- Boniol M et al. _Cutaneous melanoma attributable to sunbed use: systematic
+  review and meta-analysis._ BMJ. 2012;345:e4757.
